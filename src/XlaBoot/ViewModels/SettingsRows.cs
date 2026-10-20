@@ -22,9 +22,10 @@ public sealed class SettingsHeader : SettingsItem
 
 /// <summary>
 /// A tappable row: a title, the current value on the right, and one line under it saying what the
-/// setting is for. Tapping runs <see cref="Tap"/> — cycling to the next value, or opening a picker.
-/// Everything is a row of this one kind on purpose: no ComboBox popups or CheckBoxes, which is both
-/// thumb-friendly and how the in-game menu already behaves (and avoids an Avalonia.Android accessibility crash with toggle controls).
+/// setting is for. Tapping runs <see cref="Tap"/>: flipping an on/off value, opening the row's options
+/// underneath it (<see cref="IsDropdown"/>), or opening a picker. No ComboBox popups or CheckBoxes: the
+/// options are cards in the list itself, which is thumb-friendly and avoids an Avalonia.Android
+/// accessibility crash with toggle controls.
 /// </summary>
 public sealed partial class SettingsRow : SettingsItem
 {
@@ -46,6 +47,14 @@ public sealed partial class SettingsRow : SettingsItem
     [ObservableProperty]
     private bool _isAvailable = true;
 
+    /// <summary>Tapping opens a list of <see cref="SettingsOption"/> cards under the row; the chevron points down.</summary>
+    [ObservableProperty]
+    private bool _isDropdown;
+
+    /// <summary>The row's options are showing; the chevron points up.</summary>
+    [ObservableProperty]
+    private bool _isExpanded;
+
     public ICommand Tap { get; }
 
     public SettingsRow(string title, Action tap)
@@ -58,6 +67,20 @@ public sealed partial class SettingsRow : SettingsItem
     {
         Title = title;
         Tap = new AsyncRelayCommand(tap);
+    }
+}
+
+/// <summary>One value of an open dropdown row, listed under it. The current value carries a tick.</summary>
+public sealed class SettingsOption : SettingsItem
+{
+    public bool IsSelected { get; }
+    public ICommand Pick { get; }
+
+    public SettingsOption(string label, bool isSelected, Action pick)
+    {
+        Title = label;
+        IsSelected = isSelected;
+        Pick = new RelayCommand(pick);
     }
 }
 

@@ -5,15 +5,33 @@
              x:Class="XlaBoot.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
 
-  <!-- Every setting is a card Button that cycles its value or opens a picker: no ComboBox popups (awkward on a
-       phone) and no CheckBox/ToggleButton, which crashes Avalonia.Android as soon as an accessibility client reads
-       it. Card, tile and tab styles live in Styles/Theme.axaml. -->
+  <!-- Every setting is a card Button that flips its value, lists its options under itself, or opens a picker: no
+       ComboBox popups (awkward on a phone) and no CheckBox/ToggleButton, which crashes Avalonia.Android as soon as
+       an accessibility client reads it. Card, tile and tab styles live in Styles/Theme.axaml. -->
   <UserControl.Styles>
     <Style Selector="Button.card.warning TextBlock.title, Button.card.warning TextBlock.value">
       <Setter Property="Foreground" Value="{StaticResource XlaDangerBrush}"/>
     </Style>
     <Style Selector="Button.card.warning Border.tile > PathIcon">
       <Setter Property="Foreground" Value="{StaticResource XlaDangerBrush}"/>
+    </Style>
+
+    <!-- A dropdown row's chevron points down, and up while its options are showing. -->
+    <Style Selector="PathIcon.chevron.dropdown">
+      <Setter Property="RenderTransform" Value="rotate(90deg)"/>
+    </Style>
+    <Style Selector="PathIcon.chevron.dropdown.open">
+      <Setter Property="RenderTransform" Value="rotate(-90deg)"/>
+    </Style>
+
+    <!-- An option under an open dropdown: a slimmer card, indented under its row. -->
+    <Style Selector="Button.card.option">
+      <Setter Property="Padding" Value="14,11"/>
+      <Setter Property="CornerRadius" Value="12"/>
+    </Style>
+    <Style Selector="Button.card.option.selected TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource XlaAccentBrush}"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
 
     <Style Selector="Button.trash">
@@ -81,8 +99,22 @@
                              Margin="12,2,4,0" VerticalAlignment="Top" TextAlignment="End" MaxWidth="150"
                              TextWrapping="Wrap" Foreground="{StaticResource XlaAccentBrush}"
                              IsVisible="{Binding Value, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                  <PathIcon Grid.Column="3" Classes="chevron" Data="{x:Static views:Icons.ChevronRight}"
+                  <PathIcon Grid.Column="3" Classes="chevron" Classes.dropdown="{Binding IsDropdown}"
+                            Classes.open="{Binding IsExpanded}" Data="{x:Static views:Icons.ChevronRight}"
                             VerticalAlignment="Top" Margin="0,3,0,0"/>
+                </Grid>
+              </Button>
+            </DataTemplate>
+
+            <DataTemplate DataType="vm:SettingsOption">
+              <Button Classes="card option" Classes.selected="{Binding IsSelected}" Command="{Binding Pick}"
+                      Margin="28,0,0,8">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Grid.Column="0" Text="{Binding Title}" FontSize="15" TextWrapping="Wrap"
+                             VerticalAlignment="Center"/>
+                  <PathIcon Grid.Column="1" Width="20" Height="20" Margin="12,0,0,0"
+                            Foreground="{StaticResource XlaAccentBrush}" Data="{x:Static views:Icons.CheckCircle}"
+                            IsVisible="{Binding IsSelected}"/>
                 </Grid>
               </Button>
             </DataTemplate>

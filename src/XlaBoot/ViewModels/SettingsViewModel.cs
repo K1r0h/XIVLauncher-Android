@@ -35,7 +35,6 @@ public partial class SettingsViewModel : ViewModelBase
     private static readonly string[] PresentModes = { "MAILBOX", "FIFO", "IMMEDIATE" };
     private static readonly string[] PresentModeLabels = { "Mailbox (low latency)", "FIFO (v-synced)", "Immediate (may tear)" };
 
-
     [ObservableProperty]
     private bool _isOpen;
 
@@ -168,19 +167,16 @@ public partial class SettingsViewModel : ViewModelBase
 
         var drivers = GraphicsDrivers.All();
         var selected = GraphicsDrivers.Selected(drivers);
-        SettingsRow? driverRow = null;
-        driverRow = new SettingsRow("Driver", () =>
-        {
-            var list = GraphicsDrivers.All();
-            var index = list.FindIndex(d => d.Directory == GraphicsDrivers.Selected(list).Directory);
-            var next = list[(index + 1) % list.Count];
-            GraphicsDrivers.Select(next);
-            Rebuild(); // the Remove row appears and disappears with the selection
-        });
-        driverRow.Value = selected.Label;
+        var driverRow = Dropdown("Driver", drivers.Select(d => d.Label).ToArray(),
+            () => drivers.FindIndex(d => d.Directory == selected.Directory),
+            index =>
+            {
+                GraphicsDrivers.Select(drivers[index]);
+                Rebuild(); // the Remove row appears and disappears with the selection
+            });
         driverRow.Detail = drivers.Count == 1
             ? selected.Detail + "\nImport another below if the game renders wrongly or will not start."
-            : selected.Detail + $"\nTap to switch ({drivers.Count} installed).";
+            : selected.Detail;
         Rows.Add(driverRow);
 
         Rows.Add(new SettingsRow("Import a driver", ImportDriver)
@@ -500,14 +496,70 @@ public partial class SettingsViewModel : ViewModelBase
         }
     }
 
-    /// <summary>One setting the row cycles through, with the value and its explanation shown in place.</summary>
-    private static SettingsRow Choice(string key, string title, string[] options, string[] labels, string detail)
+    /// <summary>
+    /// One setting, with the value and its explanation shown in place. An on/off pair flips with a tap;
+    /// anything else is a dropdown.
+    /// </summary>
+    private SettingsRow Choice(string key, string title, string[] options, string[] labels, string detail)
     {
-        SettingsRow? row = null;
-        row = new SettingsRow(title, () => row!.Value = LabelOf(AppHost.Cycle(key, options), options, labels));
-        row.Value = LabelOf(AppHost.Get(key, options[0]), options, labels);
+        SettingsRow row;
+        if (labels == OnOffLabels || labels == OffOnLabels)
+        {
+            SettingsRow? flip = null;
+            flip = new SettingsRow(title, () => flip!.Value = LabelOf(AppHost.Cycle(key, options), options, labels));
+            flip.Value = LabelOf(AppHost.Get(key, options[0]), options, labels);
+            row = flip;
+        }
+        else
+        {
+            row = Dropdown(title, labels, () => Array.IndexOf(options, AppHost.Get(key, options[0])),
+                index => AppHost.Set(key, options[index]));
+        }
         row.Detail = detail;
         return row;
+    }
+
+    /// <summary>
+    /// A row whose tap lists its values as cards right under it, the current one ticked; picking one stores it
+    /// through <paramref name="pick"/> and closes the list. <paramref name="selected"/> is -1 for a stored value
+    /// that is no longer an option, which launches as the first one, so the first is shown.
+    /// </summary>
+    private SettingsRow Dropdown(string title, IReadOnlyList<string> labels, Func<int> selected, Action<int> pick)
+    {
+        SettingsRow? row = null;
+        row = new SettingsRow(title, () =>
+        {
+            var wasOpen = row!.IsExpanded;
+            CloseDropdowns();
+            if (wasOpen)
+                return;
+            row.IsExpanded = true;
+            var at = Rows.IndexOf(row) + 1;
+            var current = Math.Max(selected(), 0);
+            for (var i = 0; i < labels.Count; i++)
+            {
+                var index = i;
+                Rows.Insert(at + i, new SettingsOption(labels[i], i == current, () =>
+                {
+                    CloseDropdowns();
+                    row.Value = labels[index];
+                    pick(index);
+                }));
+            }
+        })
+        {
+            IsDropdown = true,
+            Value = labels[Math.Max(selected(), 0)],
+        };
+        return row;
+    }
+
+    private void CloseDropdowns()
+    {
+        foreach (var option in Rows.OfType<SettingsOption>().ToList())
+            Rows.Remove(option);
+        foreach (var row in Rows.OfType<SettingsRow>())
+            row.IsExpanded = false;
     }
 
     private static string LabelOf(string value, string[] options, string[] labels)
