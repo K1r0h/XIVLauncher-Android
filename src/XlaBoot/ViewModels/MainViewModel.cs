@@ -669,7 +669,9 @@ public partial class MainViewModel : ViewModelBase
             if (path.Contains('\'') || arguments.Contains('\''))
                 throw new InvalidOperationException("Launch command contains a quote character; refusing to write it to wine-cmd.");
 
-            LaunchInWine($"\"{path}\" {arguments.Trim()}", environment);
+            // Through A: (the game folder), like the Dalamud runner: winhandler.exe silently never starts a program
+            // whose path has a space in it, and a game folder picked on the phone often does.
+            LaunchInWine($"\"{ToWinePath(path)}\" {arguments.Trim()}", environment);
             return null;
         }
     }
