@@ -18,3 +18,11 @@
 
 - Auto-driver detection for Adreno 830 / 840+ devices.
 - Fixed an android focus bug on external input detection that caused the screen to wash out.
+
+## 0.2.9-alpha.1
+
+- Fixed an issue with folder path parsing that caused the game to not launch with Dalamud off.
+- Added process snapshots and log header fix for better debugging.
+- Exporting logs also exports a copy of FFXIV.cfg (game settings) for better debugging.
+- You can now opt in the dalamud beta branch. Sadly, I won't offer support for any issues caused by Dalamud or Dalamug plugins.
+- Added drop-downs to some of the settings that have multiple options so you don't have to keep manually cycling through them.
