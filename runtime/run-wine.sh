@@ -235,12 +235,32 @@ stamp() {
     done
 }
 
+# Process snapshots for a game that never shows a frame: Wine logs nothing while a process sits blocked, so
+# this records whether the game is alive, and per thread where it waits and how much CPU it burns.
+# Comparing TIME between snapshots tells blocked from spinning. Stops once wineserver is gone.
+snapshots() {
+    local wait pid
+    for wait in 15 30 45; do
+        sleep $wait
+        pidof wineserver >/dev/null 2>&1 || return
+        echo "--- processes ---"
+        ps -A -o PID,PPID,S,TIME,RSS,ARGS
+        # By process name: the arguments of start.exe, explorer and winhandler all contain the game's path.
+        for pid in $(ps -A -o PID,CMD | while read -r pid name; do [ "$name" = ffxiv_dx11.exe ] && echo $pid; done); do
+            echo "--- threads of $pid ---"
+            ps -T -p $pid -o TID,S,TIME,WCHAN,CMD
+        done
+    done
+}
+
 NOW="$(date)"
 XSOCK="$(ls -la "$TMPDIR/.X11-unix/" 2>&1)"
+{ snapshots 2>&1 | stamp >>"$LOG"; } </dev/null >/dev/null 2>&1 &
 WINE_PRELOAD="$LD_PRELOAD${EVSHIM_PRELOAD:+:$EVSHIM_PRELOAD}"
 {
   echo "=== $NOW ==="
-  echo "TARGET=$TARGET WINEDEBUG=$WINEDEBUG DISPLAY=$DISPLAY TMPDIR=$TMPDIR"
+  # print -r: mksh's echo expands backslash escapes, which mangles Windows paths (A:\game -> A:<FF>ame).
+  print -r -- "TARGET=$TARGET WINEDEBUG=$WINEDEBUG DISPLAY=$DISPLAY TMPDIR=$TMPDIR"
   echo "ADRENOTOOLS_DRIVER_PATH=$ADRENOTOOLS_DRIVER_PATH ADRENOTOOLS_DRIVER_NAME=$ADRENOTOOLS_DRIVER_NAME"
   echo "FEX preset=$XLA_FEX_PRESET multiblock=$FEX_MULTIBLOCK DXVK_FRAME_RATE=$DXVK_FRAME_RATE async=$DXVK_ASYNC"
   echo "present=$MESA_VK_WSI_PRESENT_MODE bcn=$WRAPPER_EMULATE_BCN shaderCacheDisable=$MESA_SHADER_CACHE_DISABLE esync=$WINEESYNC"

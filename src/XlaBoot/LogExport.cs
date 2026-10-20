@@ -7,7 +7,7 @@ namespace XlaBoot;
 
 /// <summary>
 /// The Logs page's export: one zip of everything useful for a bug report - Dalamud's logs folder, Wine's and the X
-/// server's logs, the per-second performance samples (perf.csv, the session heartbeat), the launch settings (xla-settings.sh holds no credentials) and a short info header.
+/// server's logs, the per-second performance samples (perf.csv, the session heartbeat), the launch settings (xla-settings.sh holds no credentials), the game's own FFXIV.cfg and a short info header.
 /// Logs may still be open for writing, so each is read with full sharing; a file that can't be read is noted in
 /// info.txt instead of failing the whole export.
 /// </summary>
@@ -25,6 +25,7 @@ public static class LogExport
             (Path.Combine(filesDir, "xserver.log"), "xserver.log"),
             (Path.Combine(filesDir, "perf.csv"), "perf.csv"),
             (Path.Combine(filesDir, "xla-settings.sh"), "xla-settings.sh"),
+            (GameSettingsPreset.ConfigPath(filesDir), "FFXIV.cfg"),
         };
         var dalamudLogs = Path.Combine(filesDir, "xlroaming", "logs");
         if (Directory.Exists(dalamudLogs))
