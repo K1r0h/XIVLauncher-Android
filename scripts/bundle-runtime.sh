@@ -25,7 +25,7 @@ P="$(cd "$(dirname "$0")/.." && pwd)"
 SRCROOT="${XLA_RUNTIME_SRC:-$P/work}"
 OUT="$SRCROOT/bundle"
 # Bump together with RuntimeInstaller.RequiredRuntimeVersion when the app needs the new runtime.
-RUNTIME_VERSION=2
+RUNTIME_VERSION=3
 ZSTD_ARGS=(-19 --long=27 -T0 -q)
 
 MANIFEST_ONLY=0
@@ -156,7 +156,9 @@ want rootfs && pack rootfs "$SRCROOT/rootfs-build/stage" usr
 # --- overlay: Windows/Japanese fonts + DXVK 2.4.1-gplasync + vkd3d 2.14.1, extracted over the prefix.
 want overlay && pack overlay "$SRCROOT/rootfs-build/overlay" drive_c
 
-# --- vkextra: the Vulkan wrapper ICD, adrenotools hook libs and the Turnip driver package.
+# --- vkextra: the Vulkan wrapper ICD, adrenotools hook libs and the Turnip driver packages: usr/lib/turnip
+# is Gen8 V30 (StevenMXZ/Adreno-Tools-Drivers), usr/lib/turnip-mrpurple is Mr_Purple's T30
+# (downloads.gamenative.app/drivers/turnip_mrpurple_T30-toasted.adpkg.zip, sha256 f65b2d33...).
 want vkextra && pack vkextra "$SRCROOT/rootfs-build/vkextra" usr
 
 # --- alsa: config only, and the one component with no source tree - transcode the existing archive.

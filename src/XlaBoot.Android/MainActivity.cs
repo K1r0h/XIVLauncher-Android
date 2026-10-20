@@ -556,6 +556,7 @@ public class MainActivity : AvaloniaMainActivity<App>
         {
             var socMaker = global::Android.OS.Build.SocManufacturer;
             var socModel = global::Android.OS.Build.SocModel;
+            AppHost.SocModel = socModel ?? "";
             lines += $"SoC: {socMaker} {socModel}{XlaBoot.DeviceInfo.FriendlySoc(socModel)}\n";
         }
         else

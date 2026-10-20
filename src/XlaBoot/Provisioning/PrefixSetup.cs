@@ -161,20 +161,23 @@ public static class PrefixSetup
     }
 
     /// <summary>
-    /// Drops the previous graphics driver before the new package unpacks, so a stale <c>.so</c> cannot
+    /// Drops the previous graphics drivers before the new package unpacks, so a stale <c>.so</c> cannot
     /// linger beside the new one and be picked up by name.
     /// </summary>
     public static void ClearBundledDriver(string filesDir)
     {
-        var turnip = Path.Combine(filesDir, "rootfs", "usr", "lib", "turnip");
-        try
+        foreach (var id in new[] { GraphicsDrivers.DefaultBundled, GraphicsDrivers.MrPurple })
         {
-            if (Directory.Exists(turnip))
-                Directory.Delete(turnip, true);
-        }
-        catch (Exception)
-        {
-            // The new package overwrites what matters anyway.
+            var turnip = Path.Combine(filesDir, "rootfs", "usr", "lib", id);
+            try
+            {
+                if (Directory.Exists(turnip))
+                    Directory.Delete(turnip, true);
+            }
+            catch (Exception)
+            {
+                // The new package overwrites what matters anyway.
+            }
         }
     }
 
@@ -244,6 +247,7 @@ public static class PrefixSetup
                      (Path.Combine(filesDir, "rootfs", "usr", "lib", "libandroid-sysvshm.so"), "rootfs"),
                      (Path.Combine(filesDir, "rootfs", "usr", "share", "vulkan", "icd.d", "turnip_icd.aarch64.json"), "vkextra"),
                      (Path.Combine(filesDir, "rootfs", "usr", "lib", "turnip", "driver-name"), "vkextra"),
+                     (Path.Combine(filesDir, "rootfs", "usr", "lib", "turnip-mrpurple", "driver-name"), "vkextra"),
                      // Written from the APK's own asset on every install, so no package owns it.
                      (Path.Combine(filesDir, "run-wine.sh"), null),
                  })

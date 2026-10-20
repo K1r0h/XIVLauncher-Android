@@ -40,8 +40,9 @@ public static class RuntimeInstaller
     /// so the next start runs the installer, which updates only the packages whose bytes changed. Without
     /// it an installed runtime is never checked again and an app update cannot reach the runtime.
     /// 2: Proton 11.0-2, whose ARM64EC cooperative suspend fixes the random freeze with Dalamud.
+    /// 3: Mr_Purple's Turnip T30 beside Gen8 V30 in vkextra, the Adreno 84x default (BestConfig).
     /// </summary>
-    public const int RequiredRuntimeVersion = 2;
+    public const int RequiredRuntimeVersion = 3;
 
     /// <summary>Headroom over the extracted size, for the packages in the cache and the shader cache.</summary>
     private const long SpareBytes = 512L * 1024 * 1024;

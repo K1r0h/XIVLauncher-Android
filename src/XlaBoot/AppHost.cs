@@ -113,6 +113,9 @@ public static class AppHost
     /// <summary>Device, SoC, RAM and Android version lines for bug-report headers. Empty when unknown.</summary>
     public static string DeviceDescription = "";
 
+    /// <summary>Build.SOC_MODEL ("SM8850"), for <see cref="BestConfig"/>. Empty before Android 12.</summary>
+    public static string SocModel = "";
+
     /// <summary>
     /// Paints the Android window behind the Avalonia surface, as 0xAARRGGBB. In landscape the display
     /// cutout leaves a strip beside the camera that the app's own surface does not cover, and that

@@ -9,13 +9,10 @@ using System.Text.Json.Serialization;
 namespace XlaBoot;
 
 /// <summary>One installed Vulkan driver package.</summary>
-/// <param name="Id">"" for the one shipped in the rootfs, otherwise its folder name under files/drivers.</param>
+/// <param name="Id">Its folder name: under rootfs/usr/lib for a bundled one, under files/drivers for an import.</param>
 /// <param name="Directory">Absolute path handed to adrenotools as ADRENOTOOLS_DRIVER_PATH.</param>
-public sealed record GraphicsDriver(string Id, string Label, string Detail, string Directory)
-{
-    /// <summary>The bundled driver is part of the runtime and cannot be deleted from the launcher.</summary>
-    public bool IsBundled => Id.Length == 0;
-}
+/// <param name="IsBundled">Part of the runtime, so it cannot be deleted from the launcher.</param>
+public sealed record GraphicsDriver(string Id, string Label, string Detail, string Directory, bool IsBundled);
 
 /// <summary>
 /// The Vulkan drivers the game can run on. Wine's guest-side Vulkan goes through Mesa's wrapper ICD,
@@ -25,7 +22,7 @@ public sealed record GraphicsDriver(string Id, string Label, string Detail, stri
 ///
 /// A driver package is the AdrenoTools layout: meta.json naming a libraryName, that one vulkan.*.so,
 /// a driver-name file holding the library name (what run-wine.sh reads) and a writable temp/ scratch
-/// directory. The bundled one lives in the rootfs; imported ones get a folder each under
+/// directory. The bundled ones live in the rootfs; imported ones get a folder each under
 /// files/drivers, which survives an app upgrade.
 /// </summary>
 public static class GraphicsDrivers
@@ -35,21 +32,38 @@ public static class GraphicsDrivers
 
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    private static string BundledDirectory => Path.Combine(AppHost.FilesDir, "rootfs", "usr", "lib", "turnip");
+    /// <summary>
+    /// The drivers the vkextra package ships, by folder under rootfs/usr/lib. The first is the default,
+    /// and run-wine.sh's fallback when no driver is selected. <see cref="BestConfig"/> picks another for
+    /// GPUs it renders wrongly on.
+    /// </summary>
+    public const string DefaultBundled = "turnip";
+    public const string MrPurple = "turnip-mrpurple";
+    private static readonly string[] Bundled = { DefaultBundled, MrPurple };
+
+    private static string BundledDirectory(string id) => Path.Combine(AppHost.FilesDir, "rootfs", "usr", "lib", id);
 
     private static string ImportRoot => Path.Combine(AppHost.FilesDir, "drivers");
 
-    /// <summary>The bundled driver first, then every imported one, oldest first.</summary>
+    /// <summary>The bundled drivers first, then every imported one, oldest first.</summary>
     public static List<GraphicsDriver> All()
     {
-        var drivers = new List<GraphicsDriver> { Describe("", BundledDirectory, "Bundled Turnip") };
+        var drivers = new List<GraphicsDriver>();
+        foreach (var id in Bundled)
+        {
+            var directory = BundledDirectory(id);
+            // The default is listed even when missing, so there is always something to fall back to;
+            // the others arrive with a runtime update.
+            if (id == DefaultBundled || File.Exists(Path.Combine(directory, "driver-name")))
+                drivers.Add(Describe(id, directory, "Bundled Turnip", bundled: true));
+        }
         try
         {
             foreach (var directory in Directory.GetDirectories(ImportRoot).OrderBy(d => d, StringComparer.Ordinal))
             {
                 if (!File.Exists(Path.Combine(directory, "driver-name")))
                     continue;
-                drivers.Add(Describe(Path.GetFileName(directory), directory, Path.GetFileName(directory)));
+                drivers.Add(Describe(Path.GetFileName(directory), directory, Path.GetFileName(directory), bundled: false));
             }
         }
         catch (DirectoryNotFoundException)
@@ -66,8 +80,11 @@ public static class GraphicsDrivers
         return drivers.FirstOrDefault(d => d.Directory == directory) ?? drivers[0];
     }
 
+    /// <summary>Whether the player is still on the default driver, having never picked one.</summary>
+    public static bool IsDefaultSelected() => AppHost.Get(SelectedKey, "").Length == 0;
+
     public static void Select(GraphicsDriver driver) =>
-        AppHost.Set(SelectedKey, driver.IsBundled ? "" : driver.Directory);
+        AppHost.Set(SelectedKey, driver.Id == DefaultBundled && driver.IsBundled ? "" : driver.Directory);
 
     /// <summary>
     /// Unpacks an AdrenoTools .zip into its own folder under files/drivers. Throws with a message
@@ -117,7 +134,7 @@ public static class GraphicsDrivers
         File.WriteAllText(Path.Combine(directory, "driver-name"), library);
         Directory.CreateDirectory(Path.Combine(directory, "temp"));
 
-        return Describe(Path.GetFileName(directory), directory, Path.GetFileName(directory));
+        return Describe(Path.GetFileName(directory), directory, Path.GetFileName(directory), bundled: false);
     }
 
     public static void Remove(GraphicsDriver driver)
@@ -133,7 +150,7 @@ public static class GraphicsDrivers
     /// The package's own name for the row, its description and driver version underneath. Falls back
     /// to the folder name, because driver-name is all that is actually needed to run a package.
     /// </summary>
-    private static GraphicsDriver Describe(string id, string directory, string fallbackLabel)
+    private static GraphicsDriver Describe(string id, string directory, string fallbackLabel, bool bundled)
     {
         var label = fallbackLabel;
         var parts = new List<string>();
@@ -154,8 +171,8 @@ public static class GraphicsDrivers
         {
             // No or unreadable meta.json: the folder name and driver-name are enough to run it.
         }
-        parts.Add(id.Length == 0 ? "shipped with the app" : "imported");
-        return new GraphicsDriver(id, label, string.Join(" - ", parts), directory);
+        parts.Add(bundled ? "shipped with the app" : "imported");
+        return new GraphicsDriver(id, label, string.Join(" - ", parts), directory, bundled);
     }
 
     /// <summary>A folder name from the package's own name, so a re-import lands on the same folder.</summary>

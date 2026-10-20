@@ -198,6 +198,7 @@ public partial class MainViewModel : ViewModelBase
         // this closes immediately and the user sees the login form directly.
         Setup.Finished += () =>
         {
+            BestConfig.Apply();
             RefreshHome();
             CheckForUpdateOnce();
             if (_pendingAutoLogin)
