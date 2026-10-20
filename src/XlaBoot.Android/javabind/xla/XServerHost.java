@@ -145,6 +145,9 @@ public final class XServerHost {
         // so the game's cursor is the only one on screen.
         view.setFocusable(true);
         view.setFocusableInTouchMode(true);
+        // A keyboard, mouse or pad touchpad takes Android out of touch mode, where it paints its focus
+        // highlight over the focused view: a pale tint across the whole game until the screen is touched.
+        if (Build.VERSION.SDK_INT >= 26) view.setDefaultFocusHighlightEnabled(false);
         view.setOnCapturedPointerListener((v, event) ->
                 touchHandler != null && touchHandler.onCapturedPointer(v, event));
         view.setPointerIcon(PointerIcon.getSystemIcon(context, PointerIcon.TYPE_NULL));
