@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using XIVLauncher.Common.Dalamud;
 using XlaBoot.Steam;
 
 namespace XlaBoot.ViewModels;
@@ -64,6 +65,11 @@ public partial class SettingsViewModel : ViewModelBase
 
     private bool _fetchingLossless;
 
+    /// <summary>Dalamud's branches as of the last fetch (Open refreshes them), for the branch dropdown. Null until the first one lands.</summary>
+    private static IReadOnlyList<DalamudBranchMeta.Branch>? _branches;
+
+    private bool _fetchingBranches;
+
     /// <summary>Second tap confirms deleting an imported driver, like the in-game menu's Exit row.</summary>
     private bool _removeArmed;
 
@@ -84,6 +90,7 @@ public partial class SettingsViewModel : ViewModelBase
             TabIndex = 0;
         Rebuild();
         IsOpen = true;
+        _ = FetchBranches();
     }
 
     [RelayCommand]
@@ -137,6 +144,7 @@ public partial class SettingsViewModel : ViewModelBase
                      + "falls back to a plain launch if it doesn't support the installed game version yet.",
         };
         Rows.Add(dalamud);
+        BuildDalamudBranch();
 
         Rows.Add(Choice("helper_plugin", "In-game helper", OnOff, OnOffLabels,
             "Installs XIVLauncher Android Helper, a small plugin that shows this device's battery in the game's "
@@ -150,6 +158,57 @@ public partial class SettingsViewModel : ViewModelBase
         });
         ShowSafeMode(safeMode);
         Rows.Add(safeMode);
+    }
+
+    /// <summary>
+    /// Dalamud's branch switcher, as in XIVLauncher on PC: the branches Dalamud lists publicly, "(unavailable)" on
+    /// one that does not support the installed game yet. Only the track is stored; the launch looks its key up.
+    /// </summary>
+    private void BuildDalamudBranch()
+    {
+        var track = AppHost.Get("dalamud_branch", "release");
+        var branches = _branches?.Where(b => !b.Hidden).ToList();
+        if (branches == null || branches.Count == 0)
+        {
+            Rows.Add(new SettingsRow("Dalamud branch", FetchBranches)
+            {
+                Value = _fetchingBranches ? "Loading" : track,
+            });
+            return;
+        }
+
+        var row = Dropdown("Dalamud branch", branches.Select(b => b.DisplayNameWithAvailability).ToArray(),
+            () => branches.FindIndex(b => b.Track == track),
+            index =>
+            {
+                AppHost.Set("dalamud_branch", branches[index].Track);
+                Rebuild(); // the description follows the branch
+            });
+        row.Detail = branches.FirstOrDefault(b => b.Track == track)?.Description ?? "";
+        Rows.Add(row);
+    }
+
+    private async Task FetchBranches()
+    {
+        if (_fetchingBranches)
+            return;
+        _fetchingBranches = true;
+        // Only the first load rebuilds: a refresh would snap shut a dropdown the player already opened.
+        var first = _branches == null;
+        try
+        {
+            _branches = (await DalamudBranchMeta.FetchBranchesAsync(MainViewModel.DalamudHttp)).ToList();
+        }
+        catch (Exception ex)
+        {
+            Status = $"Could not load Dalamud's branches: {ex.Message}";
+        }
+        finally
+        {
+            _fetchingBranches = false;
+            if (first && IsOpen && IsGeneralTab)
+                Rebuild();
+        }
     }
 
     private static void ShowSafeMode(SettingsRow row)

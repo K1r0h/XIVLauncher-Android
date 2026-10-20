@@ -52,6 +52,7 @@ public static class Icons
     {
         ["Game install location"] = Folder,
         ["Dalamud"] = Extension,
+        ["Dalamud branch"] = Code,
         ["Run in safe mode"] = Shield,
         ["In-game helper"] = Chip,
         ["Driver"] = Terrain,

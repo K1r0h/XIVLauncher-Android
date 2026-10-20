@@ -707,7 +707,23 @@ public partial class MainViewModel : ViewModelBase
             {
                 Overlay = new NoOpDalamudLoadingOverlay(),
             };
-            updater.Run(betaKind: null, betaKey: null);
+            // Settings' Dalamud branch. Only the track is stored: its key comes from Dalamud's branch list at each
+            // launch, so a key Dalamud rotates never goes stale. Anything that goes wrong gets the release build.
+            var track = AppHost.Get("dalamud_branch", "release");
+            DalamudBranchMeta.Branch? branch = null;
+            if (track != "release")
+            {
+                try
+                {
+                    branch = DalamudBranchMeta.FetchBranchesAsync(DalamudHttp).GetAwaiter().GetResult()
+                        .FirstOrDefault(b => b.Track == track);
+                }
+                catch (Exception ex)
+                {
+                    AppLog.Note($"Dalamud branch {track}: could not load Dalamud's branches ({ex.GetType().Name}), using release");
+                }
+            }
+            updater.Run(betaKind: branch?.Track, betaKey: branch?.Key);
 
             var launcher = new DalamudLauncher(
                 new AndroidDalamudRunner(runtimeDir),
@@ -725,7 +741,12 @@ public partial class MainViewModel : ViewModelBase
 
             // Blocks (busy-waits) until updater.Run's download finishes - fine here since the caller
             // already moved this whole Start() onto a background thread via Task.Run.
-            if (launcher.HoldForUpdate(gamePath) != DalamudLauncher.DalamudInstallState.Ok)
+            var state = launcher.HoldForUpdate(gamePath);
+            if (track != "release")
+                AppLog.Note(updater.IsStaging
+                    ? $"Dalamud branch {track}: {updater.ResolvedBranch?.AssemblyVersion}"
+                    : $"Dalamud branch {track}: not available, using release");
+            if (state != DalamudLauncher.DalamudInstallState.Ok)
             {
                 Console.WriteLine("XlaLauncher: Dalamud does not support this game version yet, launching without it.");
                 return new WineCmdGameRunner().Start(path, workingDirectory, arguments, environment, dpiAwareness);
@@ -812,7 +833,7 @@ public partial class MainViewModel : ViewModelBase
     }
 
     /// <summary>HttpClient for Dalamud's own updater and the one-time ICU prefix fix; both are infrequent.</summary>
-    private static readonly HttpClient DalamudHttp = new();
+    internal static readonly HttpClient DalamudHttp = new();
 
     /// <summary>
     /// Puts an already-mapped-drive path (see <see cref="PointDriveAtGame"/> and PrefixSetup.MapDrives) into
