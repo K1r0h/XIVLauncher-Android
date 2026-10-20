@@ -13,3 +13,8 @@
 ## 0.2.7-alpha.1
 
 - Fixed DS4 touchpad compatibility.
+
+## 0.2.8-alpha.1
+
+- Auto-driver detection for Adreno 830 / 840+ devices.
+- Fixed an android focus bug on external input detection that caused the screen to wash out.
