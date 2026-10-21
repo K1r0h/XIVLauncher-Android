@@ -24,5 +24,9 @@
 - Fixed an issue with folder path parsing that caused the game to not launch with Dalamud off.
 - Added process snapshots and log header fix for better debugging.
 - Exporting logs also exports a copy of FFXIV.cfg (game settings) for better debugging.
-- You can now opt in the dalamud beta branch. Sadly, I won't offer support for any issues caused by Dalamud or Dalamug plugins.
+- You can now opt in the dalamud beta branch. Sadly, I won't offer support for any issues caused by Dalamud or Dalamud plugins.
 - Added drop-downs to some of the settings that have multiple options so you don't have to keep manually cycling through them.
+
+## 0.2.10-alpha.1
+
+- Fixed heavy screen glitching on Samsung Snapdragon 8 Gen 2 devices (S23, Fold5, Flip5) when using the hardware cursor.
