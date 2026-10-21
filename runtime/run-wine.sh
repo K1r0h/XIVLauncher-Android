@@ -16,6 +16,12 @@ NATIVE_LIB_DIR="${NATIVE_LIB_DIR:-}"
 # the settings screen is what moves them for a different device.
 [ -f "$HOME/xla-settings.sh" ] && . "$HOME/xla-settings.sh"
 
+# Device facts for the driver tuning below, read before the rootfs paths are exported so the system
+# getprop runs with the system's own environment.
+GPU_MODEL=
+IFS= read -r GPU_MODEL < /sys/class/kgsl/kgsl-3d0/gpu_model 2>/dev/null
+MAKER="$(/system/bin/getprop ro.product.manufacturer 2>/dev/null)"
+
 export HOME
 export USER=xuser
 # libX11 here is the Termux-patched build: it looks for the X socket under $TMPDIR,
@@ -113,6 +119,13 @@ export ADRENOTOOLS_HOOKS_PATH="$ROOT/usr/lib"
 export TU_DEBUG=noconform
 export MESA_DEBUG=silent
 export MESA_NO_ERROR=1
+# Adreno 740: TPL1_DBG_ECO_CNTL1.TP_UBWC_FLAG_HINT is one register shared by every driver on the GPU,
+# and Turnip has to set it the way the system driver does, or UBWC images come out as tiled garbage
+# once Android's own UI renders (notification shade, nav bar, keyboard). Mesa leaves it off for the
+# 740; Samsung's firmware turns it on whatever blob version it reports.
+case "$GPU_MODEL" in
+    Adreno740*) [ "$MAKER" = samsung ] && export FD_DEV_FEATURES=enable_tp_ubwc_flag_hint=1 ;;
+esac
 # Settings: present mode. mailbox is lowest-latency and the default; fifo is the safe choice on a
 # driver whose mailbox path stutters or tears.
 export MESA_VK_WSI_PRESENT_MODE="${XLA_PRESENT_MODE:-mailbox}"
@@ -262,6 +275,7 @@ WINE_PRELOAD="$LD_PRELOAD${EVSHIM_PRELOAD:+:$EVSHIM_PRELOAD}"
   # print -r: mksh's echo expands backslash escapes, which mangles Windows paths (A:\game -> A:<FF>ame).
   print -r -- "TARGET=$TARGET WINEDEBUG=$WINEDEBUG DISPLAY=$DISPLAY TMPDIR=$TMPDIR"
   echo "ADRENOTOOLS_DRIVER_PATH=$ADRENOTOOLS_DRIVER_PATH ADRENOTOOLS_DRIVER_NAME=$ADRENOTOOLS_DRIVER_NAME"
+  echo "gpu=$GPU_MODEL maker=$MAKER FD_DEV_FEATURES=${FD_DEV_FEATURES:-default}"
   echo "FEX preset=$XLA_FEX_PRESET multiblock=$FEX_MULTIBLOCK DXVK_FRAME_RATE=$DXVK_FRAME_RATE async=$DXVK_ASYNC"
   echo "present=$MESA_VK_WSI_PRESENT_MODE bcn=$WRAPPER_EMULATE_BCN shaderCacheDisable=$MESA_SHADER_CACHE_DISABLE esync=$WINEESYNC"
   echo "game=$GAME dalamud=${XLA_DALAMUD:-0} lsfg=${XLA_LSFG:-0}${LSFG_CONFIG:+ x2 flow=${XLA_LSFG_FLOW_SCALE:-0.80}}"
