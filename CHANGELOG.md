@@ -30,3 +30,7 @@
 ## 0.2.10-alpha.1
 
 - Fixed heavy screen glitching on Samsung Snapdragon 8 Gen 2 devices (S23, Fold5, Flip5) when using the hardware cursor.
+
+## 0.2.11-alpha
+
+- Updated the download and patching logic of the game for better in-app game install speed.
