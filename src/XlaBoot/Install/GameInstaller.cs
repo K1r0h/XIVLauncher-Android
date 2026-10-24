@@ -55,8 +55,10 @@ public sealed class NotEnoughSpaceException(long required, long free) : IOExcept
 /// <c>Environment.Exit</c> on failure, leak a mutex on the hash-failure path, and queue downloads with no
 /// regard for disk space. The pieces underneath them are public, so this is the orchestration only.
 ///
-/// Strictly one patch at a time: download, verify, apply, record the version, delete. Peak disk use is
-/// therefore the game plus one patch, which is what makes a large install fit on a phone at all.
+/// Each patch is downloaded, verified, applied, recorded and deleted in order, and the next one downloads
+/// while the current one applies. That overlap only happens when there is room for both; otherwise it
+/// falls back to one patch at a time, whose peak disk use (the game plus one patch) is what makes a large
+/// install fit on a phone at all.
 ///
 /// Resuming needs no journal. The <c>.ver</c> files are the checkpoint: after an interruption the server
 /// hands back only the patches still missing, and a half-downloaded patch file is Range-resumed.
@@ -120,38 +122,121 @@ public static class GameInstaller
         if (free > 0 && free < required)
             throw new NotEnoughSpaceException(required, free);
 
-        long finished = 0;
+        // Start of each patch within the chain, so either worker can turn its own count into a chain total.
+        var offsets = new long[patches.Count];
+        for (var i = 1; i < patches.Count; i++)
+            offsets[i] = offsets[i - 1] + patches[i - 1].Length;
+
+        // Shared by the download and the apply, which report from different threads.
+        var gate = new object();
+        long downloaded = 0, applied = 0;
+        double rate = 0;
+        string? installing = null;
+        var installingNumber = 0;
+
+        string Label(int i) => patches.Count == 1 ? "the update" : $"update {i + 1} of {patches.Count}";
+        string FileOf(int i) => Path.Combine(patchStore, patches[i].GetFilePath());
+
+        // While an apply runs it names the step: it is the slower half, and the one a cancel waits for.
+        void Report(string step, int number)
+        {
+            lock (gate)
+                report(new InstallProgress(installing ?? step, installing != null ? installingNumber : number,
+                    patches.Count, downloaded, applied, total, rate));
+        }
+
+        // Stops a download running ahead when the apply beside it fails.
+        using var abandon = CancellationTokenSource.CreateLinkedTokenSource(cancel);
+
+        async Task Fetch(int i)
+        {
+            await DownloadAsync(patches[i], FileOf(i), http, abandon.Token, (done, r) =>
+            {
+                lock (gate)
+                {
+                    downloaded = offsets[i] + done;
+                    rate = r;
+                    Report($"Downloading {Label(i)}", i + 1);
+                }
+            }).ConfigureAwait(false);
+            lock (gate)
+            {
+                downloaded = offsets[i] + patches[i].Length;
+                rate = 0;
+            }
+        }
+
+        // Peak disk use while patch i applies and i + 1 downloads: the rest of i + 1, plus what applying
+        // each of them adds. Re-checked per patch, because the user's other apps keep using the disk.
+        long OverlapNeeded(int i) => patches[i + 1].Length - PartialBytes(patches[i + 1], patchStore)
+                                     + patches[i + 1].Length + patches[i].Length + ReserveBytes;
+
+        Task? next = null;
         for (var i = 0; i < patches.Count; i++)
         {
-            cancel.ThrowIfCancellationRequested();
             var patch = patches[i];
-            var number = i + 1;
-            var file = Path.Combine(patchStore, patch.GetFilePath());
-            var label = patches.Count == 1 ? "the update" : $"update {number} of {patches.Count}";
 
-            // Re-checked per patch, because the user's other apps keep using the disk during a long install.
-            free = freeBytes?.Invoke(gamePath) ?? 0;
-            var needed = (patch.Length - PartialBytes(patch, patchStore)) + patch.Length + ReserveBytes;
-            if (free > 0 && free < needed)
-                throw new NotEnoughSpaceException(needed, free);
+            // With a download already running, a cancel surfaces from awaiting it instead.
+            if (next == null)
+            {
+                cancel.ThrowIfCancellationRequested();
+                free = freeBytes?.Invoke(gamePath) ?? 0;
+                var needed = (patch.Length - PartialBytes(patch, patchStore)) + patch.Length + ReserveBytes;
+                if (free > 0 && free < needed)
+                    throw new NotEnoughSpaceException(needed, free);
+                next = Fetch(i);
+            }
+            await next.ConfigureAwait(false);
+            next = null;
 
-            await DownloadAsync(patch, file, http, cancel, (done, rate) =>
-                report(new InstallProgress($"Downloading {label}", number, patches.Count,
-                    finished + done, finished, total, rate))).ConfigureAwait(false);
+            // The network would sit idle for the whole apply otherwise. Only with room for both patches at
+            // once; without it the next one simply waits, which is the one-at-a-time install that always fit.
+            if (i + 1 < patches.Count)
+            {
+                free = freeBytes?.Invoke(gamePath) ?? 0;
+                if (free > 0 && free >= OverlapNeeded(i))
+                    next = Fetch(i + 1);
+            }
 
-            report(new InstallProgress($"Checking {label}", number, patches.Count,
-                finished + patch.Length, finished, total, 0));
-
-            // Not cancellable once started: stopping halfway through a patch is how an install gets
-            // corrupted. A cancel lands after this patch is fully applied and recorded.
-            await Task.Run(() => Apply(patch, file, gamePath, applied =>
-                report(new InstallProgress($"Installing {label}", number, patches.Count,
-                    finished + patch.Length, finished + applied, total, 0))), CancellationToken.None)
-                .ConfigureAwait(false);
+            lock (gate)
+            {
+                installing = $"Installing {Label(i)}";
+                installingNumber = i + 1;
+            }
+            try
+            {
+                // Not cancellable once started: stopping halfway through a patch is how an install gets
+                // corrupted. A cancel lands after this patch is fully applied and recorded.
+                var start = offsets[i];
+                await Task.Run(() => Apply(patch, FileOf(i), gamePath, done =>
+                {
+                    lock (gate)
+                    {
+                        applied = start + done;
+                        Report("", i + 1);
+                    }
+                }), CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                abandon.Cancel();
+                if (next != null)
+                {
+                    try { await next.ConfigureAwait(false); }
+                    catch (Exception) { /* the apply failure is the one to report */ }
+                }
+                throw;
+            }
+            finally
+            {
+                lock (gate)
+                    installing = null;
+            }
 
             patch.GetRepo().SetVer(game, patch.VersionId);
-            RangeDownload.TryDelete(file);
-            finished += patch.Length;
+            RangeDownload.TryDelete(FileOf(i));
+            lock (gate)
+                applied = offsets[i] + patch.Length;
         }
 
         VerToBck(game);

@@ -1,5 +1,6 @@
 using Android.App;
 using Android.Content;
+using Android.Net.Wifi;
 using Android.OS;
 
 namespace XlaBoot.Android;
@@ -26,6 +27,7 @@ public class KeepAliveService : Service
     public const string ExtraProgress = "progress";
 
     private PowerManager.WakeLock? _wakeLock;
+    private WifiManager.WifiLock? _wifiLock;
 
     public override IBinder? OnBind(Intent? intent) => null;
 
@@ -47,6 +49,19 @@ public class KeepAliveService : Service
             _wakeLock?.Acquire();
         }
 
+        // The wake lock keeps the CPU up, not the radio: with the screen off, Wi-Fi drops into power save
+        // and an overnight download crawls. HIGH_PERF is the only mode that holds with the screen off
+        // (LOW_LATENCY needs it on); deprecated in API 34 but still the documented way to ask.
+        if (_wifiLock == null)
+        {
+            var wifi = (WifiManager?)ApplicationContext?.GetSystemService(WifiService);
+#pragma warning disable CA1422
+            _wifiLock = wifi?.CreateWifiLock(global::Android.Net.WifiMode.FullHighPerf, "xla:provision");
+#pragma warning restore CA1422
+            _wifiLock?.SetReferenceCounted(false);
+            _wifiLock?.Acquire();
+        }
+
         // Restarted by the system without an intent: there is nothing to resume from here, the app
         // re-checks and resumes on its own.
         return StartCommandResult.NotSticky;
@@ -57,6 +72,9 @@ public class KeepAliveService : Service
         if (_wakeLock is { IsHeld: true })
             _wakeLock.Release();
         _wakeLock = null;
+        if (_wifiLock is { IsHeld: true })
+            _wifiLock.Release();
+        _wifiLock = null;
         base.OnDestroy();
     }
 
