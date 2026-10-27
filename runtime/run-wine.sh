@@ -207,11 +207,17 @@ XLA_FEX_PRESET="${XLA_FEX_PRESET:-INTERMEDIATE}"
 case "$XLA_FEX_PRESET" in
     PERFORMANCE)   set -- 0 0 0 0 1 ;;
     COMPATIBILITY) set -- 1 1 1 1 0 ;;
+# K1r0h 10/27/2026 added Extreme preset
+    EXTREME)    set -- 0 0 0 0 1 ;;
     *)             XLA_FEX_PRESET=INTERMEDIATE; set -- 1 0 0 1 1 ;;
 esac
 export FEX_TSOENABLED=$1 FEX_VECTORTSOENABLED=$2 FEX_MEMCPYSETTSOENABLED=$3
 export FEX_HALFBARRIERTSOENABLED=$4 FEX_X87REDUCEDPRECISION=$5
 export FEX_MULTIBLOCK="${XLA_FEX_MULTIBLOCK:-1}"
+# Disable FEX emergency fallback beyond performance
+if ["$XLA_FEX_PRESET" = "EXTREME" ]; then
+    export FEX_EMERGENCY_FALLBACK_ENABLED=0
+fi
 
 GAME="${XLA_GAME_DIR:-/storage/emulated/0/Emulation/windows/import/FFXIV}"
 TARGET="winecfg /?"

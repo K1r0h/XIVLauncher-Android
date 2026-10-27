@@ -394,8 +394,8 @@ public partial class SettingsViewModel : ViewModelBase
     {
         Rows.Add(new SettingsHeader("x86 emulation (FEXCore)"));
         Rows.Add(Choice("fex_preset", "Preset",
-            new[] { "INTERMEDIATE", "PERFORMANCE", "COMPATIBILITY" },
-            new[] { "Intermediate", "Performance", "Compatibility" },
+            new[] { "INTERMEDIATE", "PERFORMANCE", "COMPATIBILITY", "EXTREME" },
+            new[] { "Intermediate", "Performance", "Compatibility", "Extreme" },
             "How faithfully FEX emulates x86 memory ordering. Intermediate is what runs the game here; "
             + "Performance drops the remaining barriers (faster, can break); Compatibility keeps them all (slower, cooler code paths)."));
         Rows.Add(Choice("fex_multiblock", "Multi-block recompilation", OnOff, OnOffLabels,
