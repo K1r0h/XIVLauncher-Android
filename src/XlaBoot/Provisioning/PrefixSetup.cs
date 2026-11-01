@@ -115,6 +115,15 @@ public static class PrefixSetup
     public static void WriteLaunchScript(string filesDir, byte[] runWineSh)
     {
         var path = Path.Combine(filesDir, "run-wine.sh");
+        if (File.Exists(path))
+        {
+            var current = File.ReadAllText(path);
+            if (current.Contains("# XLA-DXVK-IMPORT"))
+            {
+                Console.WriteLine("XlaLauncher: preserving modified run-wine.sh (dxvk-import detected)");
+                return;
+            }
+        }
         File.WriteAllBytes(path, runWineSh);
         try
         {

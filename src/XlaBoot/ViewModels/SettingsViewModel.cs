@@ -400,7 +400,31 @@ public partial class SettingsViewModel : ViewModelBase
             + "Performance drops the remaining barriers (faster, can break); Compatibility keeps them all (slower, cooler code paths)."));
         Rows.Add(Choice("fex_multiblock", "Multi-block recompilation", OnOff, OnOffLabels,
             "Lets FEX compile past a branch into one block. Faster; off is a debugging step for a device that crashes early."));
-
+                Rows.Add(new SettingsHeader("DXVK"));
+        var dxvkVersions = ComponentImporter.DxvkVersions(AppHost.FilesDir);
+        var dxvkLabels = dxvkVersions
+            .Select(v => v == ComponentImporter.SelectedVersion(AppHost.FilesDir) ? v + " (active)" : v)
+            .Prepend("Stock (runtime default)")
+            .ToArray();
+                var selected = ComponentImporter.SelectedVersion(AppHost.FilesDir);
+        var selectedIndex = selected == "stock" ? 0 : dxvkVersions.ToList().IndexOf(selected) + 1;
+        
+        Rows.Add(Dropdown("DXVK version", dxvkLabels,
+            () => selectedIndex,
+            index =>
+            {
+                var version = index == 0 ? "stock" : dxvkVersions[index - 1];
+                ComponentImporter.SelectVersion(AppHost.FilesDir, version);
+                Status = version == "stock" ? "Using runtime default." : $"Using {version}.";
+                Rebuild();
+            }));
+        Rows.Add(new SettingsRow("Import DXVK", ImportDxvk)
+        {
+            Value = "Pick zip",
+            Detail = ComponentImporter.SelectedVersion(AppHost.FilesDir) == "stock"
+                ? "Using the runtime's built-in DXVK."
+                : "Active: " + ComponentImporter.SelectedVersion(AppHost.FilesDir) + ". Drop a new zip to add another.",
+        });
         Rows.Add(new SettingsHeader("Wine"));
         Rows.Add(Choice("esync", "Esync", OnOff, OnOffLabels,
             "Eventfd-based synchronisation instead of the server round trip. Much faster; off if threads deadlock."));
@@ -713,6 +737,38 @@ public partial class SettingsViewModel : ViewModelBase
             {
                 try { File.Delete(file.Path); }
                 catch (Exception) { /* the cache dir is Android's to reclaim */ }
+            }
+        }
+    }
+    private async Task ImportDxvk()
+    {
+        if (AppHost.PickFile == null)
+        {
+            Status = "No file picker on this platform.";
+            return;
+        }
+
+        PickedFile? file = null;
+        try
+        {
+            file = await AppHost.PickFile();
+            if (file == null)
+                return;
+            Status = "Importing DXVK...";
+            await Task.Run(() => ComponentImporter.ImportDxvk(file.Path, AppHost.FilesDir));
+            Status = "Imported. Next launch uses the new DLLs.";
+            Rebuild();
+        }
+        catch (Exception ex)
+        {
+            Status = "Import failed: " + ex.Message;
+        }
+        finally
+        {
+            if (file != null)
+            {
+                try { File.Delete(file.Path); }
+                catch (Exception) { }
             }
         }
     }
