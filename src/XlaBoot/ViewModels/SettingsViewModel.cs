@@ -72,6 +72,7 @@ public partial class SettingsViewModel : ViewModelBase
 
     /// <summary>Second tap confirms deleting an imported driver, like the in-game menu's Exit row.</summary>
     private bool _removeArmed;
+    private bool _removeDxvkArmed;
 
     partial void OnTabIndexChanged(int value)
     {
@@ -104,6 +105,7 @@ public partial class SettingsViewModel : ViewModelBase
     private void Rebuild()
     {
         _removeArmed = false;
+        _removeDxvkArmed = false;
         Rows.Clear();
         switch (TabIndex)
         {
@@ -426,6 +428,35 @@ public partial class SettingsViewModel : ViewModelBase
                 ? "Using the runtime's built-in DXVK."
                 : "Active: " + ComponentImporter.SelectedVersion(AppHost.FilesDir) + ". Drop a new zip to add another.",
         });
+
+        var dxvkSel = ComponentImporter.SelectedVersion(AppHost.FilesDir);
+        if (dxvkSel != "stock")
+        {
+            Rows.Add(new SettingsRow("Remove DXVK", () =>
+            {
+                if (!_removeDxvkArmed)
+                {
+                    _removeDxvkArmed = true;
+                    Status = $"Tap again to delete {dxvkSel}.";
+                    return;
+                }
+                try
+                {
+                    ComponentImporter.RemoveDxvk(AppHost.FilesDir, dxvkSel);
+                    Status = $"Removed {dxvkSel}; back on the runtime's DXVK.";
+                }
+                catch (Exception ex)
+                {
+                    Status = $"Could not remove it: {ex.GetType().Name}: {ex.Message}";
+                }
+                Rebuild();
+            })
+            {
+                Value = "Delete",
+                Detail = $"Deletes the imported DXVK {dxvkSel}.",
+                IsWarning = true,
+            });
+        }
         Rows.Add(new SettingsHeader("Wine"));
         Rows.Add(Choice("esync", "Esync", OnOff, OnOffLabels,
             "Eventfd-based synchronisation instead of the server round trip. Much faster; off if threads deadlock."));

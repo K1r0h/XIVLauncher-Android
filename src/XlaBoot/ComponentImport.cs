@@ -248,4 +248,13 @@ if (!name.StartsWith("x32/") && !name.StartsWith("x64/"))
     {
         File.WriteAllText(SelectedFile(filesDir), version);
     }
+
+    public static void RemoveDxvk(string filesDir, string version)
+    {
+        var dest = Path.Combine(DxvkRoot(filesDir), version);
+        if (Directory.Exists(dest))
+            Directory.Delete(dest, true);
+        if (SelectedVersion(filesDir) == version)
+            File.WriteAllText(SelectedFile(filesDir), "stock");
+    }
 }
