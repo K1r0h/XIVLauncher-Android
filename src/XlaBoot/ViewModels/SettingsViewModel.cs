@@ -404,6 +404,7 @@ public partial class SettingsViewModel : ViewModelBase
         var dxvkVersions = ComponentImporter.DxvkVersions(AppHost.FilesDir);
         var dxvkLabels = dxvkVersions
             .Select(v => v == ComponentImporter.SelectedVersion(AppHost.FilesDir) ? v + " (active)" : v)
+            .Select(v => v.StartsWith("dxvk-", StringComparison.OrdinalIgnoreCase) ? v["dxvk-".Length..] : v)
             .Prepend("Stock (runtime default)")
             .ToArray();
                 var selected = ComponentImporter.SelectedVersion(AppHost.FilesDir);

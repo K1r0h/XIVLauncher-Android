@@ -18,6 +18,8 @@ public static class ComponentImporter
     var version = Path.GetFileNameWithoutExtension(archivePath);
     if (version.EndsWith(".tar", StringComparison.OrdinalIgnoreCase))
         version = Path.GetFileNameWithoutExtension(version);
+    if (version.StartsWith("dxvk-", StringComparison.OrdinalIgnoreCase))
+        version = version["dxvk-".Length..];
     var dest = Path.Combine(root, version);
     if (Directory.Exists(dest)) Directory.Delete(dest, true);
     Directory.CreateDirectory(dest);
@@ -27,6 +29,40 @@ public static class ComponentImporter
         fs.Read(header, 0, 2);
 
     bool isGzip = header[0] == 0x1f && header[1] == 0x8b;
+
+    string detectedVersion = null;
+    if (!isGzip)
+    {
+        using var archive = ZipFile.OpenRead(archivePath);
+        var first = archive.Entries.FirstOrDefault(e => !string.IsNullOrEmpty(e.FullName));
+        if (first != null)
+        {
+            var name = first.FullName.Replace('\\', '/').TrimStart('/');
+            var parts = name.Split('/', 2);
+            if (parts.Length > 0)
+            {
+                detectedVersion = parts[0];
+                if (detectedVersion.EndsWith(".tar", StringComparison.OrdinalIgnoreCase))
+                    detectedVersion = Path.GetFileNameWithoutExtension(detectedVersion);
+                if (detectedVersion.StartsWith("dxvk-", StringComparison.OrdinalIgnoreCase))
+                    detectedVersion = detectedVersion["dxvk-".Length..];
+            }
+        }
+    }
+    else
+    {
+        using var stream = File.OpenRead(archivePath);
+        using var gzip = new System.IO.Compression.GZipStream(stream, System.IO.Compression.CompressionMode.Decompress);
+        detectedVersion = DetectTarVersion(gzip);
+    }
+
+    if (!string.IsNullOrEmpty(detectedVersion) && detectedVersion != version)
+    {
+        version = detectedVersion;
+        dest = Path.Combine(root, version);
+        if (Directory.Exists(dest)) Directory.Delete(dest, true);
+        Directory.CreateDirectory(dest);
+    }
 
     if (!isGzip)
     {
@@ -137,6 +173,44 @@ if (!name.StartsWith("x32/") && !name.StartsWith("x64/"))
         if (string.IsNullOrEmpty(s)) return 0;
         return Convert.ToInt64(s, 8);
     }
+
+    private static string? DetectTarVersion(Stream tarStream)
+    {
+        var buffer = new byte[512];
+        for (int i = 0; i < 20; i++)
+        {
+            int read = ReadExact(tarStream, buffer, 0, 512);
+            if (read == 0) break;
+
+            var name = System.Text.Encoding.ASCII.GetString(buffer, 0, 100).TrimEnd('\0');
+            if (string.IsNullOrEmpty(name)) continue;
+
+            var type = System.Text.Encoding.ASCII.GetString(buffer, 156, 12).TrimEnd('\0');
+            if (type.Equals("5", StringComparison.Ordinal)) continue; // skip directories
+
+            long size = ParseOctal(buffer, 124, 12);
+            if (size > 0 && name.Contains('/'))
+            {
+                var parts = name.Replace('\\', '/').TrimStart('/').Split('/');
+                if (parts.Length > 0)
+                {
+                    var top = parts[0];
+                    if (!string.IsNullOrEmpty(top) && top != ".")
+                    {
+                        if (top.EndsWith(".tar", StringComparison.OrdinalIgnoreCase))
+                            top = Path.GetFileNameWithoutExtension(top);
+                        if (top.StartsWith("dxvk-", StringComparison.OrdinalIgnoreCase))
+                            top = top["dxvk-".Length..];
+                        return top;
+                    }
+                }
+            }
+
+            long pad = (512 - (size % 512)) % 512;
+            if (pad > 0) Skip(tarStream, pad);
+        }
+        return null;
+    }
     private static void Skip(this Stream stream, long bytes)
     {
         while (bytes > 0)
@@ -153,6 +227,7 @@ if (!name.StartsWith("x32/") && !name.StartsWith("x64/"))
         if (!Directory.Exists(root)) return Array.Empty<string>();
         return Directory.GetDirectories(root)
             .Select(Path.GetFileName)
+            .Where(v => v != "stock-backup")
             .OrderBy(n => n)
             .ToArray();
     }
