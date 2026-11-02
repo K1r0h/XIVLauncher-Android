@@ -92,7 +92,7 @@ export WINEESYNC="${XLA_ESYNC:-1}"
 # vkextra copy the pre-rename package id), so it is written here from the real install path on
 # every launch. That keeps the runtime bundle independent of the package id and the Android user.
 ICD="$ROOT/usr/share/vulkan/icd.d/xla_icd.aarch64.json"
-printf '{\n    "ICD": {\n        "api_version": "${XLA_VULKAN_VERSION:-1.3.289}",\n        "library_path": "%s"\n    },\n    "file_format_version": "1.0.0"\n}\n' \
+printf '{\n    "ICD": {\n        "api_version": "1.3.289",\n        "library_path": "%s"\n    },\n    "file_format_version": "1.0.0"\n}\n' \
     "$ROOT/usr/lib/libvulkan_wrapper.so" > "$ICD"
 export VK_ICD_FILENAMES="$ICD"
 # Settings: the graphics driver. Empty XLA_DRIVER_DIR means the one shipped in the rootfs; a driver
@@ -138,7 +138,7 @@ export VKD3D_SHADER_MODEL=6_0
 # Wrapper ICD settings, matched to what GameNative derives for the user's (clean-rendering) FFXIV
 # container: graphicsDriver=Wrapper, bcnEmulation=auto, resourceType=auto, presentMode=mailbox.
 # See XServerScreen.kt's Wrapper branch. BCn compute emulation is excluded on Adreno there.
-export WRAPPER_VK_VERSION="${XLA_VULKAN_VERSION:-1.3.284}"
+export WRAPPER_VK_VERSION=1.3.284          # <vulkanVersion>.<Adreno driver patch>
 export WRAPPER_EXTENSION_BLACKLIST=
 export WRAPPER_RESOURCE_TYPE=auto
 export WRAPPER_DISABLE_PRESENT_WAIT=0

@@ -65,21 +65,21 @@ if (!name.StartsWith("x32/") && !name.StartsWith("x64/"))
         var buffer = new byte[8192];
         while (true)
         {
-            int read = tarStream.Read(buffer, 0, 512);
+            int read = ReadExact(tarStream, buffer, 0, 512);
             if (read == 0) break;
-            if (read < 512) break;
 
             var name = System.Text.Encoding.ASCII.GetString(buffer, 0, 100).TrimEnd('\0');
-            if (string.IsNullOrEmpty(name)) break;
+            if (string.IsNullOrEmpty(name)) continue;
 
             var type = System.Text.Encoding.ASCII.GetString(buffer, 156, 12).TrimEnd('\0');
             long size = ParseOctal(buffer, 124, 12);
 
             bool isDll = name.Replace('\\', '/').EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
                       && !type.Equals("5", StringComparison.Ordinal);
+            bool isSymlink = type.Equals("2", StringComparison.Ordinal) || type.Equals("l", StringComparison.Ordinal);
             long dataRemaining = size;
 
-            if (isDll && size > 0)
+            if ((isDll && size > 0) || (isSymlink && size == 0))
             {
                 var relative = name.Replace('\\', '/').TrimStart('/');
                 var parts = relative.Split('/');
@@ -117,6 +117,18 @@ if (!name.StartsWith("x32/") && !name.StartsWith("x64/"))
             long pad = (512 - (size % 512)) % 512;
             if (pad > 0) Skip(tarStream, pad);
         }
+    }
+
+    private static int ReadExact(Stream stream, byte[] buffer, int offset, int count)
+    {
+        int total = 0;
+        while (total < count)
+        {
+            int read = stream.Read(buffer, offset + total, count - total);
+            if (read <= 0) break;
+            total += read;
+        }
+        return total;
     }
 
     private static long ParseOctal(byte[] buffer, int offset, int count)
