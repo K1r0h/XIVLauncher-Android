@@ -2,7 +2,7 @@
 # Runs inside the app process, after xla.XServerHost is already listening.
 # Env contract mirrors GameNative's BionicProgramLauncherComponent so the bionic rootfs,
 # the vendored X server and FEXCore all line up.
-HOME=${HOME:-/data/user/0/uk.aetherworks.xivlauncher/files}
+HOME=${HOME:-/data/user/0/uk.aetherworks.xivlauncher.debug/files}
 LOG="$HOME/wine-test.log"
 : > "$LOG"
 
