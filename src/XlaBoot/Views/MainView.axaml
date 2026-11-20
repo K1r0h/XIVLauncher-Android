@@ -185,10 +185,10 @@
             </Grid>
           </Button>
 
-          <!-- Login: one solid accent button, label and game version centred. -->
+          <!-- Login: one solid accent pill (fully rounded ends), label and game version centred. -->
           <Button Classes="primary" Command="{Binding NavigateCommand}" CommandParameter="Login"
                   IsVisible="{Binding !IsGameMissing}" HorizontalAlignment="Stretch"
-                  HorizontalContentAlignment="Center" Padding="0,14">
+                  HorizontalContentAlignment="Center" Padding="0,14" CornerRadius="100">
             <StackPanel HorizontalAlignment="Center" Spacing="2">
               <TextBlock Text="{x:Static loc:Strings.Home_Play}" FontSize="17" FontWeight="SemiBold"
                          HorizontalAlignment="Center"/>
