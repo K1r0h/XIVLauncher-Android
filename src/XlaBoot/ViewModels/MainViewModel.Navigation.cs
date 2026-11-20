@@ -9,8 +9,8 @@ namespace XlaBoot.ViewModels;
 public enum LauncherPage { Home, Login, Settings, Logs, About }
 
 /// <summary>
-/// The launcher's pages. Home, Settings and Logs sit on the bottom navigation; Login (reached from Play) and About are
-/// pushed pages with a back arrow. Android's Back goes to Home from anywhere, then leaves the app.
+/// The launcher's pages. Home, Settings, Logs and About sit on the bottom navigation; Login (reached from Play) is a
+/// pushed page with a back arrow. Android's Back goes to Home from anywhere, then leaves the app.
 /// </summary>
 public partial class MainViewModel
 {
@@ -24,7 +24,7 @@ public partial class MainViewModel
     public bool IsSettingsPage => Page == LauncherPage.Settings;
     public bool IsLogsPage => Page == LauncherPage.Logs;
     public bool IsAboutPage => Page == LauncherPage.About;
-    public bool ShowBottomNav => Page is LauncherPage.Home or LauncherPage.Settings or LauncherPage.Logs;
+    public bool ShowBottomNav => Page is LauncherPage.Home or LauncherPage.Settings or LauncherPage.Logs or LauncherPage.About;
 
     public LogsViewModel Logs { get; } = new();
 

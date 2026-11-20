@@ -206,19 +206,6 @@
           <Border Classes="card" Padding="4" IsVisible="{Binding News.HasTopics}">
             <ItemsControl ItemsSource="{Binding News.Topics}" ItemTemplate="{StaticResource NewsRow}"/>
           </Border>
-
-          <Button Classes="card" Command="{Binding NavigateCommand}" CommandParameter="About">
-            <Grid ColumnDefinitions="Auto,*,Auto">
-              <Border Grid.Column="0" Classes="tile" Margin="0,0,14,0">
-                <PathIcon Data="{x:Static views:Icons.Info}"/>
-              </Border>
-              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
-                <TextBlock Text="{x:Static loc:Strings.Home_About}" FontSize="16" FontWeight="SemiBold"/>
-                <TextBlock Classes="dim" Text="{x:Static loc:Strings.Home_AboutDetail}" FontSize="12.5"/>
-              </StackPanel>
-              <PathIcon Grid.Column="2" Classes="chevron" Data="{x:Static views:Icons.ChevronRight}"/>
-            </Grid>
-          </Button>
         </StackPanel>
       </StackPanel>
     </ScrollViewer>
@@ -366,10 +353,6 @@
       <views:SkyBackdrop/>
       <ScrollViewer>
         <StackPanel Margin="20,12,20,24" Spacing="10" MaxWidth="480">
-          <Button Classes="icon" HorizontalAlignment="Left" Margin="-10,0,0,0"
-                  Command="{Binding NavigateCommand}" CommandParameter="Home">
-            <PathIcon Data="{x:Static views:Icons.ArrowBack}"/>
-          </Button>
           <views:CrystalLogo Width="96" Height="136" HorizontalAlignment="Center"/>
           <TextBlock Text="XIVLauncher" FontSize="32" FontWeight="SemiBold" HorizontalAlignment="Center"/>
           <TextBlock Text="{x:Static loc:Strings.About_Subtitle}" FontSize="17" HorizontalAlignment="Center" Foreground="#C8D4F0" Margin="0,-6,0,0"/>
@@ -435,7 +418,7 @@
     <!-- ================================ Bottom navigation ================================ -->
     <Border Grid.Row="1" IsVisible="{Binding ShowBottomNav}" Background="#0A1022"
             BorderBrush="{StaticResource XlaCardBorderBrush}" BorderThickness="0,1,0,0">
-      <Grid ColumnDefinitions="*,*,*" Margin="0,2,0,4">
+      <Grid ColumnDefinitions="*,*,*,*" Margin="0,2,0,4">
         <Button Grid.Column="0" Classes="nav" Classes.selected="{Binding IsHomePage}"
                 Command="{Binding NavigateCommand}" CommandParameter="Home">
           <StackPanel Spacing="3" HorizontalAlignment="Center">
@@ -455,6 +438,13 @@
           <StackPanel Spacing="3" HorizontalAlignment="Center">
             <PathIcon Data="{x:Static views:Icons.Logs}" HorizontalAlignment="Center"/>
             <TextBlock Text="{x:Static loc:Strings.Logs_Title}" HorizontalAlignment="Center"/>
+          </StackPanel>
+        </Button>
+        <Button Grid.Column="3" Classes="nav" Classes.selected="{Binding IsAboutPage}"
+                Command="{Binding NavigateCommand}" CommandParameter="About">
+          <StackPanel Spacing="3" HorizontalAlignment="Center">
+            <PathIcon Data="{x:Static views:Icons.Info}" HorizontalAlignment="Center"/>
+            <TextBlock Text="{x:Static loc:Strings.Home_About}" HorizontalAlignment="Center"/>
           </StackPanel>
         </Button>
       </Grid>
