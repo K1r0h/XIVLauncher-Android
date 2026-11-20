@@ -113,13 +113,32 @@
     <!-- ================================ Home ================================ -->
     <ScrollViewer Grid.Row="0" IsVisible="{Binding IsHomePage}">
       <StackPanel>
-        <!-- Hero: sky, crystal, title -->
+        <!-- Hero: sky, title, banners -->
         <Grid Height="250">
           <views:SkyBackdrop/>
           <StackPanel Margin="20,28,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Spacing="2">
             <TextBlock Text="XIVLauncher" FontSize="30" FontWeight="SemiBold"/>
             <TextBlock Text="{x:Static loc:Strings.Home_Subtitle}" FontSize="14" Foreground="#C8D4F0"/>
           </StackPanel>
+          <!-- Banner carousel from the official launcher, under the title. -->
+          <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
+                        IsVisible="{Binding News.HasBanners}"
+                        VerticalAlignment="Bottom" Margin="16,0,0,16">
+            <ItemsControl ItemsSource="{Binding News.Banners}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="10"/></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:NewsBanner">
+                  <Button Padding="0" Background="Transparent" BorderThickness="0" Command="{Binding OpenCommand}">
+                    <Border CornerRadius="10" ClipToBounds="True">
+                      <Image Source="{Binding Image}" Height="120" Stretch="Uniform"/>
+                    </Border>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
         </Grid>
 
         <StackPanel Margin="16,4,16,16" Spacing="12" MaxWidth="600">
@@ -169,23 +188,6 @@
 
           <!-- News from the official launcher's feeds: banner carousel, then notices, news (maintenance etc.)
                and topics (events). Every entry opens its Lodestone page. -->
-          <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
-                        IsVisible="{Binding News.HasBanners}" Margin="0,6,0,0">
-            <ItemsControl ItemsSource="{Binding News.Banners}">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="10"/></ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:NewsBanner">
-                  <Button Padding="0" Background="Transparent" BorderThickness="0" Command="{Binding OpenCommand}">
-                    <Border CornerRadius="10" ClipToBounds="True">
-                      <Image Source="{Binding Image}" Height="120" Stretch="Uniform"/>
-                    </Border>
-                  </Button>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </ScrollViewer>
 
           <TextBlock Classes="dim" Text="{x:Static loc:Strings.Home_NewsUnavailable}" FontSize="12.5"
                      IsVisible="{Binding News.Failed}" Margin="4,0"/>
