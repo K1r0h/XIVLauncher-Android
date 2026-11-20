@@ -227,8 +227,8 @@
       <views:SkyBackdrop/>
       <!-- ScrollViewer so the fields stay reachable when the soft keyboard covers half the screen. -->
       <ScrollViewer>
-        <StackPanel HorizontalAlignment="Stretch" Spacing="6" Margin="24,12,24,24" MaxWidth="420">
-          <!-- The back button sits over the page (below) rather than in this column, so a phone shows the whole
+        <StackPanel HorizontalAlignment="Stretch" Spacing="6" Margin="24,60,24,24" MaxWidth="420">
+          <!-- The back button sits over the page (below) in the top-left corner; the column starts under it. Kept tight so a phone shows the whole
                form down to the Log in button without scrolling. -->
           <views:CrystalLogo Width="70" Height="99" HorizontalAlignment="Center" Margin="0,4,0,0"/>
           <TextBlock Text="XIVLauncher" FontSize="30" FontWeight="SemiBold" HorizontalAlignment="Center"/>
