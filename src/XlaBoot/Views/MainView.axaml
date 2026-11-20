@@ -114,7 +114,7 @@
     <ScrollViewer Grid.Row="0" IsVisible="{Binding IsHomePage}">
       <StackPanel>
         <!-- Hero: sky, title, banners -->
-        <Grid Height="250">
+        <Grid Height="270">
           <views:SkyBackdrop/>
           <StackPanel Margin="20,28,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Spacing="2">
             <TextBlock Text="XIVLauncher" FontSize="30" FontWeight="SemiBold"/>
@@ -122,11 +122,11 @@
           </StackPanel>
           <!-- Official launcher banners under the title, one at a time: tap the left or right edge to step
                (wraps around), tap the middle to open it. -->
-          <Grid IsVisible="{Binding News.HasBanners}" VerticalAlignment="Bottom" HorizontalAlignment="Left"
-                Margin="16,0,16,16" Height="120">
+          <Grid IsVisible="{Binding News.HasBanners}" VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                Margin="16,0,16,14" Height="150">
             <Button Padding="0" Background="Transparent" BorderThickness="0" Command="{Binding News.OpenBannerCommand}">
               <Border CornerRadius="10" ClipToBounds="True">
-                <Image Source="{Binding News.CurrentBanner.Image}" Height="120" Stretch="Uniform"/>
+                <Image Source="{Binding News.CurrentBanner.Image}" Height="150" Stretch="Uniform"/>
               </Border>
             </Button>
             <Grid ColumnDefinitions="*,2*,*">
