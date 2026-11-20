@@ -229,6 +229,18 @@
   <data name="Settings_LauncherLanguage" xml:space="preserve">
     <value>Sprache des Launchers</value>
   </data>
+  <data name="Settings_HomeNews" xml:space="preserve">
+    <value>Neuigkeiten auf der Startseite</value>
+  </data>
+  <data name="Settings_HomeNewsDetail" xml:space="preserve">
+    <value>Hinweise, Wartungen und Events aus dem offiziellen Launcher.</value>
+  </data>
+  <data name="Settings_HomeBanners" xml:space="preserve">
+    <value>Event-Banner auf der Startseite</value>
+  </data>
+  <data name="Settings_HomeBannersDetail" xml:space="preserve">
+    <value>Die Bilder unter dem Titel.</value>
+  </data>
   <data name="Settings_SystemDefault" xml:space="preserve">
     <value>Systemsprache</value>
   </data>

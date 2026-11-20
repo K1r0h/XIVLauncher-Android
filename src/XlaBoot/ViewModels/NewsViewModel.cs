@@ -90,6 +90,12 @@ public partial class NewsViewModel : ObservableObject
     /// <summary>Called whenever Home is shown; does nothing while a load is running or the last one is recent.</summary>
     public void Refresh(ClientLanguage language)
     {
+        // Settings > General: "News on Home" and "Event banners on Home".
+        _newsEnabled = AppHost.Get("home_news", "ON") == "ON";
+        _bannersEnabled = AppHost.Get("home_banners", "ON") == "ON";
+        UpdateVisibility();
+        if (!_newsEnabled && !_bannersEnabled)
+            return;
         if (_loading || DateTime.UtcNow - _loadedAt < RefreshAfter)
             return;
         _loading = true;
@@ -126,25 +132,40 @@ public partial class NewsViewModel : ObservableObject
                 Fill(Pinned, headlines.Pinned?.Select(ToItem));
                 Fill(News, headlines.News?.Select(ToItem));
                 Fill(Topics, headlines.Topics?.Select(ToItem));
-                HasBanners = Banners.Count > 0;
                 ShowBanner(0);
-                HasPinned = Pinned.Count > 0;
-                HasNews = News.Count > 0;
-                HasTopics = Topics.Count > 0;
                 Failed = false;
+                UpdateVisibility();
             });
             _loadedAt = DateTime.UtcNow;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"XlaLauncher: news unavailable ({ex.GetType().Name}: {ex.Message})");
-            await Dispatcher.UIThread.InvokeAsync(() => Failed = !HasNews && !HasTopics && !HasPinned);
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                Failed = Pinned.Count + News.Count + Topics.Count == 0;
+                UpdateVisibility();
+            });
         }
         finally
         {
             _loading = false;
         }
     }
+
+    private bool _newsEnabled = true, _bannersEnabled = true;
+
+    /// <summary>What the home page shows: loaded content, minus what Settings turned off.</summary>
+    private void UpdateVisibility()
+    {
+        HasBanners = _bannersEnabled && Banners.Count > 0;
+        HasPinned = _newsEnabled && Pinned.Count > 0;
+        HasNews = _newsEnabled && News.Count > 0;
+        HasTopics = _newsEnabled && Topics.Count > 0;
+        ShowFailure = _newsEnabled && Failed;
+    }
+
+    [ObservableProperty] private bool _showFailure;
 
     private static NewsItem ToItem(News n) => new()
     {

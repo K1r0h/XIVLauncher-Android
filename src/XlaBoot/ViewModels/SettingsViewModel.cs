@@ -153,6 +153,10 @@ public partial class SettingsViewModel : ViewModelBase
                 Rebuild(); // these rows, in the new language; the rest of the app follows through Loc.Changed
             }));
 
+        // Home page news panel (MainViewModel.News); read each time Home is shown.
+        Rows.Add(Choice("home_news", Strings.Settings_HomeNews, OnOff, OnOffLabels, Strings.Settings_HomeNewsDetail));
+        Rows.Add(Choice("home_banners", Strings.Settings_HomeBanners, OnOff, OnOffLabels, Strings.Settings_HomeBannersDetail));
+
         Rows.Add(new SettingsHeader(Strings.Settings_HeaderPlugins));
         // Like Choice(), but the Dalamud Repos tab appears and disappears with it.
         SettingsRow? dalamud = null;

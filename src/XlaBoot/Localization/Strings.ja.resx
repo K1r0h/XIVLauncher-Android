@@ -229,6 +229,18 @@
   <data name="Settings_LauncherLanguage" xml:space="preserve">
     <value>ランチャーの言語</value>
   </data>
+  <data name="Settings_HomeNews" xml:space="preserve">
+    <value>ホームにニュースを表示</value>
+  </data>
+  <data name="Settings_HomeNewsDetail" xml:space="preserve">
+    <value>公式ランチャーのお知らせ、メンテナンス、イベント情報。</value>
+  </data>
+  <data name="Settings_HomeBanners" xml:space="preserve">
+    <value>ホームにイベントバナーを表示</value>
+  </data>
+  <data name="Settings_HomeBannersDetail" xml:space="preserve">
+    <value>タイトルの下の画像。</value>
+  </data>
   <data name="Settings_SystemDefault" xml:space="preserve">
     <value>端末の設定に従う</value>
   </data>

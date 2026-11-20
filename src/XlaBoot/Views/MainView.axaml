@@ -198,7 +198,7 @@
                and topics (events). Every entry opens its Lodestone page. -->
 
           <TextBlock Classes="dim" Text="{x:Static loc:Strings.Home_NewsUnavailable}" FontSize="12.5"
-                     IsVisible="{Binding News.Failed}" Margin="4,0"/>
+                     IsVisible="{Binding News.ShowFailure}" Margin="4,0"/>
 
           <TextBlock Classes="caption" Text="{x:Static loc:Strings.Home_Important}" IsVisible="{Binding News.HasPinned}"/>
           <Border Classes="card" Padding="4" IsVisible="{Binding News.HasPinned}">
