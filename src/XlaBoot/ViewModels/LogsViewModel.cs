@@ -43,6 +43,13 @@ public sealed class LogLine
         Foreground = IsError(text) ? Error : IsWarning(text) ? Warning : Normal;
     }
 
+    /// <summary>A continuation row of a long line, in that line's colour.</summary>
+    public LogLine(string text, IBrush foreground)
+    {
+        Text = text;
+        Foreground = foreground;
+    }
+
     // Dalamud/Serilog ([ERR], [FTL], [WRN]), Wine (err:, warn:, fixme: stays normal) and plain words.
     private static bool IsError(string t) =>
         t.Contains("[ERR]") || t.Contains("[FTL]") || t.Contains(" err:") || t.StartsWith("err:")
@@ -74,8 +81,35 @@ public partial class LogsViewModel : ViewModelBase
     [ObservableProperty]
     private System.Collections.Generic.IReadOnlyList<LogLine> _lines = Array.Empty<LogLine>();
 
-    partial void OnTextChanged(string value) =>
-        Lines = value.Split('\n').Select(l => new LogLine(l.TrimEnd('\r'))).ToArray();
+    /// <summary>
+    /// Characters per screen row, set by the view from its width (the log font is monospace). Long lines are cut into
+    /// rows of this length here rather than wrapped by the text blocks, so every item is exactly one row tall: the
+    /// list then knows its full height up front and the scroll bar stays steady instead of resizing as you scroll.
+    /// </summary>
+    [ObservableProperty]
+    private int _columns = 80;
+
+    partial void OnTextChanged(string value) => Split();
+    partial void OnColumnsChanged(int value) => Split();
+
+    private void Split()
+    {
+        var width = Math.Max(20, Columns);
+        var rows = new System.Collections.Generic.List<LogLine>();
+        foreach (var raw in Text.Split('\n'))
+        {
+            var line = raw.TrimEnd('\r');
+            if (line.Length <= width)
+            {
+                rows.Add(new LogLine(line));
+                continue;
+            }
+            var colour = new LogLine(line).Foreground; // a wrapped error stays red on every row
+            for (var i = 0; i < line.Length; i += width)
+                rows.Add(new LogLine(line.Substring(i, Math.Min(width, line.Length - i)), colour));
+        }
+        Lines = rows;
+    }
 
     [ObservableProperty]
     private string _detail = "";

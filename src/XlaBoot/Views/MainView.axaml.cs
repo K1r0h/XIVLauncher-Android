@@ -116,6 +116,22 @@ public partial class MainView : UserControl
         }
     }
 
+    /// <summary>Monospace cell width of the log font, measured once.</summary>
+    private static double? _logCharWidth;
+
+    /// <summary>Tells the log how many characters fit on a row, so it can cut long lines to whole rows.</summary>
+    private void OnLogScrollSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (_viewModel == null || e.NewSize.Width <= 0)
+            return;
+        _logCharWidth ??= new FormattedText("0000000000", System.Globalization.CultureInfo.InvariantCulture,
+            FlowDirection.LeftToRight, new Typeface("monospace"), 11, null).Width / 10;
+        // 24 = the list's 12 px margin on each side; one column spare so rounding never clips the last character.
+        var columns = (int)((e.NewSize.Width - 24) / _logCharWidth.Value) - 1;
+        if (columns > 0)
+            _viewModel.Logs.Columns = columns;
+    }
+
     /// <summary>Another log picked, or the same one reloaded: open it at the newest line too.</summary>
     private void OnLogsPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
