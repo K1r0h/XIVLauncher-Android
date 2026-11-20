@@ -116,8 +116,6 @@
         <!-- Hero: sky, crystal, title -->
         <Grid Height="250">
           <views:SkyBackdrop/>
-          <views:CrystalLogo Width="120" Height="170" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                             Margin="0,0,34,26"/>
           <StackPanel Margin="20,28,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Spacing="2">
             <TextBlock Text="XIVLauncher" FontSize="30" FontWeight="SemiBold"/>
             <TextBlock Text="{x:Static loc:Strings.Home_Subtitle}" FontSize="14" Foreground="#C8D4F0"/>
@@ -168,18 +166,6 @@
           </Button>
 
 
-          <Button Classes="card" Command="{Binding NavigateCommand}" CommandParameter="About">
-            <Grid ColumnDefinitions="Auto,*,Auto">
-              <Border Grid.Column="0" Classes="tile" Margin="0,0,14,0">
-                <PathIcon Data="{x:Static views:Icons.Info}"/>
-              </Border>
-              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
-                <TextBlock Text="{x:Static loc:Strings.Home_About}" FontSize="16" FontWeight="SemiBold"/>
-                <TextBlock Classes="dim" Text="{x:Static loc:Strings.Home_AboutDetail}" FontSize="12.5"/>
-              </StackPanel>
-              <PathIcon Grid.Column="2" Classes="chevron" Data="{x:Static views:Icons.ChevronRight}"/>
-            </Grid>
-          </Button>
 
           <!-- News from the official launcher's feeds: banner carousel, then notices, news (maintenance etc.)
                and topics (events). Every entry opens its Lodestone page. -->
@@ -218,6 +204,19 @@
           <Border Classes="card" Padding="4" IsVisible="{Binding News.HasTopics}">
             <ItemsControl ItemsSource="{Binding News.Topics}" ItemTemplate="{StaticResource NewsRow}"/>
           </Border>
+
+          <Button Classes="card" Command="{Binding NavigateCommand}" CommandParameter="About">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Border Grid.Column="0" Classes="tile" Margin="0,0,14,0">
+                <PathIcon Data="{x:Static views:Icons.Info}"/>
+              </Border>
+              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                <TextBlock Text="{x:Static loc:Strings.Home_About}" FontSize="16" FontWeight="SemiBold"/>
+                <TextBlock Classes="dim" Text="{x:Static loc:Strings.Home_AboutDetail}" FontSize="12.5"/>
+              </StackPanel>
+              <PathIcon Grid.Column="2" Classes="chevron" Data="{x:Static views:Icons.ChevronRight}"/>
+            </Grid>
+          </Button>
         </StackPanel>
       </StackPanel>
     </ScrollViewer>
