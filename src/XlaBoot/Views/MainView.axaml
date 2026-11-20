@@ -120,25 +120,33 @@
             <TextBlock Text="XIVLauncher" FontSize="30" FontWeight="SemiBold"/>
             <TextBlock Text="{x:Static loc:Strings.Home_Subtitle}" FontSize="14" Foreground="#C8D4F0"/>
           </StackPanel>
-          <!-- Banner carousel from the official launcher, under the title. -->
-          <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
-                        IsVisible="{Binding News.HasBanners}"
-                        VerticalAlignment="Bottom" Margin="16,0,0,16">
-            <ItemsControl ItemsSource="{Binding News.Banners}">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="10"/></ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:NewsBanner">
-                  <Button Padding="0" Background="Transparent" BorderThickness="0" Command="{Binding OpenCommand}">
-                    <Border CornerRadius="10" ClipToBounds="True">
-                      <Image Source="{Binding Image}" Height="120" Stretch="Uniform"/>
-                    </Border>
-                  </Button>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </ScrollViewer>
+          <!-- Official launcher banners under the title, one at a time: tap the left or right edge to step
+               (wraps around), tap the middle to open it. -->
+          <Grid IsVisible="{Binding News.HasBanners}" VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                Margin="16,0,16,16" Height="120">
+            <Button Padding="0" Background="Transparent" BorderThickness="0" Command="{Binding News.OpenBannerCommand}">
+              <Border CornerRadius="10" ClipToBounds="True">
+                <Image Source="{Binding News.CurrentBanner.Image}" Height="120" Stretch="Uniform"/>
+              </Border>
+            </Button>
+            <Grid ColumnDefinitions="*,2*,*">
+              <Button Grid.Column="0" Background="Transparent" BorderThickness="0" Padding="6,0"
+                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Left"
+                      Command="{Binding News.PreviousBannerCommand}">
+                <PathIcon Data="{x:Static views:Icons.ChevronRight}" Width="18" Height="18" Foreground="#CCFFFFFF"
+                          RenderTransform="scaleX(-1)"/>
+              </Button>
+              <Button Grid.Column="2" Background="Transparent" BorderThickness="0" Padding="6,0"
+                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Right"
+                      Command="{Binding News.NextBannerCommand}">
+                <PathIcon Data="{x:Static views:Icons.ChevronRight}" Width="18" Height="18" Foreground="#CCFFFFFF"/>
+              </Button>
+            </Grid>
+            <Border Background="#99000000" CornerRadius="8" Padding="6,1" Margin="0,0,8,6"
+                    HorizontalAlignment="Right" VerticalAlignment="Bottom" IsHitTestVisible="False">
+              <TextBlock Text="{Binding News.BannerPosition}" FontSize="11" Foreground="White"/>
+            </Border>
+          </Grid>
         </Grid>
 
         <StackPanel Margin="16,4,16,16" Spacing="12" MaxWidth="600">

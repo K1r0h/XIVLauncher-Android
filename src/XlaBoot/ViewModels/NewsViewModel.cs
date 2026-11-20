@@ -59,6 +59,34 @@ public partial class NewsViewModel : ObservableObject
     [ObservableProperty] private bool _hasTopics;
     [ObservableProperty] private bool _failed;
 
+    /// <summary>The one banner on show; the header steps through them with taps on its left and right edges.</summary>
+    [ObservableProperty] private NewsBanner? _currentBanner;
+    [ObservableProperty] private string _bannerPosition = "";
+    private int _bannerIndex;
+
+    [RelayCommand]
+    private void PreviousBanner() => ShowBanner(_bannerIndex - 1);
+
+    [RelayCommand]
+    private void NextBanner() => ShowBanner(_bannerIndex + 1);
+
+    [RelayCommand]
+    private void OpenBanner() => OpenUrl(CurrentBanner?.Url);
+
+    /// <summary>Wraps around at both ends.</summary>
+    private void ShowBanner(int index)
+    {
+        if (Banners.Count == 0)
+        {
+            CurrentBanner = null;
+            BannerPosition = "";
+            return;
+        }
+        _bannerIndex = ((index % Banners.Count) + Banners.Count) % Banners.Count;
+        CurrentBanner = Banners[_bannerIndex];
+        BannerPosition = $"{_bannerIndex + 1} / {Banners.Count}";
+    }
+
     /// <summary>Called whenever Home is shown; does nothing while a load is running or the last one is recent.</summary>
     public void Refresh(ClientLanguage language)
     {
@@ -99,6 +127,7 @@ public partial class NewsViewModel : ObservableObject
                 Fill(News, headlines.News?.Select(ToItem));
                 Fill(Topics, headlines.Topics?.Select(ToItem));
                 HasBanners = Banners.Count > 0;
+                ShowBanner(0);
                 HasPinned = Pinned.Count > 0;
                 HasNews = News.Count > 0;
                 HasTopics = Topics.Count > 0;
