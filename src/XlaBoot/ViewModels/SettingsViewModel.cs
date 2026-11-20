@@ -154,8 +154,9 @@ public partial class SettingsViewModel : ViewModelBase
             }));
 
         // Home page news panel (MainViewModel.News); read each time Home is shown.
-        Rows.Add(Choice("home_news", Strings.Settings_HomeNews, OnOff, OnOffLabels, Strings.Settings_HomeNewsDetail));
-        Rows.Add(Choice("home_banners", Strings.Settings_HomeBanners, OnOff, OnOffLabels, Strings.Settings_HomeBannersDetail));
+        Rows.Add(Choice("home_feed", Strings.Settings_HomeNews, new[] { "BOTH", "NEWS", "BANNERS", "OFF" },
+            new[] { Strings.Settings_HomeNewsBoth, Strings.Settings_HomeNewsOnly, Strings.Settings_HomeBannersOnly, Strings.Common_Off },
+            Strings.Settings_HomeNewsDetail));
 
         Rows.Add(new SettingsHeader(Strings.Settings_HeaderPlugins));
         // Like Choice(), but the Dalamud Repos tab appears and disappears with it.

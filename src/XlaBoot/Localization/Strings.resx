@@ -233,13 +233,16 @@
     <value>News on Home</value>
   </data>
   <data name="Settings_HomeNewsDetail" xml:space="preserve">
-    <value>Notices, maintenance and events from the official launcher.</value>
+    <value>Notices, maintenance, events and their banners, from the official launcher.</value>
   </data>
-  <data name="Settings_HomeBanners" xml:space="preserve">
-    <value>Event banners on Home</value>
+  <data name="Settings_HomeNewsBoth" xml:space="preserve">
+    <value>News + banners</value>
   </data>
-  <data name="Settings_HomeBannersDetail" xml:space="preserve">
-    <value>The pictures under the title.</value>
+  <data name="Settings_HomeNewsOnly" xml:space="preserve">
+    <value>News only</value>
+  </data>
+  <data name="Settings_HomeBannersOnly" xml:space="preserve">
+    <value>Banners only</value>
   </data>
   <data name="Settings_SystemDefault" xml:space="preserve">
     <value>System default</value>

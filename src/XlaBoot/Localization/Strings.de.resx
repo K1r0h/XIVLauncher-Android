@@ -233,13 +233,16 @@
     <value>Neuigkeiten auf der Startseite</value>
   </data>
   <data name="Settings_HomeNewsDetail" xml:space="preserve">
-    <value>Hinweise, Wartungen und Events aus dem offiziellen Launcher.</value>
+    <value>Hinweise, Wartungen, Events und ihre Banner aus dem offiziellen Launcher.</value>
   </data>
-  <data name="Settings_HomeBanners" xml:space="preserve">
-    <value>Event-Banner auf der Startseite</value>
+  <data name="Settings_HomeNewsBoth" xml:space="preserve">
+    <value>Neuigkeiten + Banner</value>
   </data>
-  <data name="Settings_HomeBannersDetail" xml:space="preserve">
-    <value>Die Bilder unter dem Titel.</value>
+  <data name="Settings_HomeNewsOnly" xml:space="preserve">
+    <value>Nur Neuigkeiten</value>
+  </data>
+  <data name="Settings_HomeBannersOnly" xml:space="preserve">
+    <value>Nur Banner</value>
   </data>
   <data name="Settings_SystemDefault" xml:space="preserve">
     <value>Systemsprache</value>

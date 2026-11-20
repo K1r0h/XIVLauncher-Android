@@ -90,9 +90,10 @@ public partial class NewsViewModel : ObservableObject
     /// <summary>Called whenever Home is shown; does nothing while a load is running or the last one is recent.</summary>
     public void Refresh(ClientLanguage language)
     {
-        // Settings > General: "News on Home" and "Event banners on Home".
-        _newsEnabled = AppHost.Get("home_news", "ON") == "ON";
-        _bannersEnabled = AppHost.Get("home_banners", "ON") == "ON";
+        // Settings > General > News on Home: BOTH, NEWS, BANNERS or OFF.
+        var feed = AppHost.Get("home_feed", "BOTH");
+        _newsEnabled = feed is "BOTH" or "NEWS";
+        _bannersEnabled = feed is "BOTH" or "BANNERS";
         UpdateVisibility();
         if (!_newsEnabled && !_bannersEnabled)
             return;
