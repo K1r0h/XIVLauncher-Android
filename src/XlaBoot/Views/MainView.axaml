@@ -185,18 +185,16 @@
             </Grid>
           </Button>
 
-          <Button Classes="card" Command="{Binding NavigateCommand}" CommandParameter="Login"
-                  IsVisible="{Binding !IsGameMissing}">
-            <Grid ColumnDefinitions="Auto,*,Auto">
-              <Border Grid.Column="0" Classes="tile accentTile" Margin="0,0,14,0">
-                <PathIcon Data="{x:Static views:Icons.Play}"/>
-              </Border>
-              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
-                <TextBlock Text="{x:Static loc:Strings.Home_Play}" FontSize="16" FontWeight="SemiBold"/>
-                <TextBlock Classes="dim" Text="{Binding PlayDetail}" FontSize="12.5"/>
-              </StackPanel>
-              <PathIcon Grid.Column="2" Classes="chevron" Data="{x:Static views:Icons.ChevronRight}"/>
-            </Grid>
+          <!-- Login: one solid accent button, label and game version centred. -->
+          <Button Classes="primary" Command="{Binding NavigateCommand}" CommandParameter="Login"
+                  IsVisible="{Binding !IsGameMissing}" HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center" Padding="0,14">
+            <StackPanel HorizontalAlignment="Center" Spacing="2">
+              <TextBlock Text="{x:Static loc:Strings.Home_Play}" FontSize="17" FontWeight="SemiBold"
+                         HorizontalAlignment="Center"/>
+              <TextBlock Text="{Binding PlayDetail}" FontSize="12.5" Opacity="0.8" HorizontalAlignment="Center"
+                         TextAlignment="Center" TextWrapping="Wrap"/>
+            </StackPanel>
           </Button>
 
 
