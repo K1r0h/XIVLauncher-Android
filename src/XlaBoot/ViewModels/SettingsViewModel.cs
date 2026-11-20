@@ -44,7 +44,7 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isOpen;
 
-    /// <summary>0 General, 1 Graphics, 2 Advanced, 3 Dalamud Repos.</summary>
+    /// <summary>0 General, 1 Display, 2 Components, 3 Dalamud, 4 Advanced.</summary>
     [ObservableProperty]
     private int _tabIndex;
 
@@ -55,12 +55,12 @@ public partial class SettingsViewModel : ViewModelBase
     public ObservableCollection<SettingsItem> Rows { get; } = new();
 
     public bool IsGeneralTab => TabIndex == 0;
-    public bool IsGraphicsTab => TabIndex == 1;
-    public bool IsAdvancedTab => TabIndex == 2;
-    public bool IsReposTab => TabIndex == 3;
+    public bool IsDisplayTab => TabIndex == 1;
+    public bool IsComponentsTab => TabIndex == 2;
+    public bool IsDalamudTab => TabIndex == 3;
+    public bool IsAdvancedTab => TabIndex == 4;
 
-    /// <summary>The Dalamud Repos tab only exists while Dalamud is on.</summary>
-    public bool ShowReposTab => AppHost.Get("dalamud_enabled", OffOn[0]) == "ON";
+    private static bool DalamudOn => AppHost.Get("dalamud_enabled", OffOn[0]) == "ON";
 
     /// <summary>
     /// Signs in to Steam and fetches Lossless.dll, reporting progress through the callback. True when a
@@ -83,18 +83,16 @@ public partial class SettingsViewModel : ViewModelBase
     partial void OnTabIndexChanged(int value)
     {
         OnPropertyChanged(nameof(IsGeneralTab));
-        OnPropertyChanged(nameof(IsGraphicsTab));
+        OnPropertyChanged(nameof(IsDisplayTab));
+        OnPropertyChanged(nameof(IsComponentsTab));
+        OnPropertyChanged(nameof(IsDalamudTab));
         OnPropertyChanged(nameof(IsAdvancedTab));
-        OnPropertyChanged(nameof(IsReposTab));
         Rebuild();
     }
 
     public void Open()
     {
         Status = "";
-        OnPropertyChanged(nameof(ShowReposTab));
-        if (IsReposTab && !ShowReposTab)
-            TabIndex = 0;
         Rebuild();
         IsOpen = true;
         _ = FetchBranches();
@@ -115,9 +113,10 @@ public partial class SettingsViewModel : ViewModelBase
         Rows.Clear();
         switch (TabIndex)
         {
-            case 1: BuildGraphics(); break;
-            case 2: BuildAdvanced(); break;
-            case 3: BuildRepos(); break;
+            case 1: BuildDisplay(); break;
+            case 2: BuildComponents(); break;
+            case 3: BuildDalamud(); break;
+            case 4: BuildAdvanced(); break;
             default: BuildGeneral(); break;
         }
         foreach (var row in Rows.OfType<SettingsRow>())
@@ -143,6 +142,7 @@ public partial class SettingsViewModel : ViewModelBase
             new[] { "English", "French", "German", "Japanese" },
             new[] { "English", "Français", "Deutsch", "日本語" }, ""));
 
+        Rows.Add(new SettingsHeader(Strings.Settings_HeaderLauncher));
         // The language names stay in their own language, so a player stuck in the wrong one can still find theirs.
         var launcherLanguages = new[] { Strings.Settings_SystemDefault, "English", "Français", "Deutsch", "日本語" };
         Rows.Add(Dropdown(Strings.Settings_LauncherLanguage, launcherLanguages,
@@ -157,22 +157,28 @@ public partial class SettingsViewModel : ViewModelBase
         Rows.Add(Choice("home_feed", Strings.Settings_HomeNews, new[] { "BOTH", "NEWS", "BANNERS", "OFF" },
             new[] { Strings.Settings_HomeNewsBoth, Strings.Settings_HomeNewsOnly, Strings.Settings_HomeBannersOnly, Strings.Common_Off },
             Strings.Settings_HomeNewsDetail));
+    }
 
+    /// <summary>
+    /// The Dalamud tab: the switch, then (only while it is on) the branch, the helper plugin, safe mode and the
+    /// custom plugin repos. Off, the rest would only be noise, so the tab is just the switch.
+    /// </summary>
+    private void BuildDalamud()
+    {
         Rows.Add(new SettingsHeader(Strings.Settings_HeaderPlugins));
-        // Like Choice(), but the Dalamud Repos tab appears and disappears with it.
-        SettingsRow? dalamud = null;
-        dalamud = new SettingsRow("Dalamud", () =>
+        Rows.Add(new SettingsRow("Dalamud", () =>
         {
-            dalamud!.Value = LabelOf(AppHost.Cycle("dalamud_enabled", OffOn), OffOn, OffOnLabels);
-            OnPropertyChanged(nameof(ShowReposTab));
+            AppHost.Cycle("dalamud_enabled", OffOn);
+            Rebuild(); // the rest of the tab appears and disappears with it
         })
         {
             Value = LabelOf(AppHost.Get("dalamud_enabled", OffOn[0]), OffOn, OffOnLabels),
             Detail = Strings.Settings_DalamudDetail,
-        };
-        Rows.Add(dalamud);
-        BuildDalamudBranch();
+        });
+        if (!DalamudOn)
+            return;
 
+        BuildDalamudBranch();
         Rows.Add(Choice("helper_plugin", Strings.Settings_Helper, OnOff, OnOffLabels, Strings.Settings_HelperDetail));
 
         SettingsRow? safeMode = null;
@@ -183,6 +189,8 @@ public partial class SettingsViewModel : ViewModelBase
         });
         ShowSafeMode(safeMode);
         Rows.Add(safeMode);
+
+        BuildRepos();
     }
 
     /// <summary>
@@ -231,7 +239,7 @@ public partial class SettingsViewModel : ViewModelBase
         finally
         {
             _fetchingBranches = false;
-            if (first && IsOpen && IsGeneralTab)
+            if (first && IsOpen && IsDalamudTab)
                 Rebuild();
         }
     }
@@ -244,7 +252,8 @@ public partial class SettingsViewModel : ViewModelBase
         row.Detail = Strings.Settings_SafeModeDetail;
     }
 
-    private void BuildGraphics()
+    /// <summary>The swappable parts of the runtime, one row each: graphics driver, FEXCore, DXVK.</summary>
+    private void BuildComponents()
     {
         Rows.Add(new SettingsHeader(Strings.Settings_HeaderDriver));
 
@@ -291,6 +300,18 @@ public partial class SettingsViewModel : ViewModelBase
             : selected.Detail;
         Rows.Add(driverRow);
 
+        Rows.Add(new SettingsHeader(Strings.Settings_HeaderFex));
+        BuildComponentRows("FEXCore", FexImport.Store(AppHost.FilesDir), RuntimeInstaller.StockFexVersion,
+            Strings.Settings_FexSource, FexImport.Import);
+
+        Rows.Add(new SettingsHeader(Strings.Settings_HeaderDxvk));
+        BuildComponentRows("DXVK", DxvkImport.Store(AppHost.FilesDir), RuntimeInstaller.StockDxvkVersion,
+            Strings.Settings_DxvkSource, DxvkImport.Import);
+    }
+
+    /// <summary>What the game looks like and how fast it runs: resolution, FPS cap, frame generation, game settings.</summary>
+    private void BuildDisplay()
+    {
         Rows.Add(new SettingsHeader(Strings.Settings_HeaderOutput));
         Rows.Add(Choice("resolution", Strings.Settings_Resolution,
             new[] { "1280x720", "1560x720", "1170x540", "960x540", "1280x800", "1152x720", "864x540" },
@@ -299,20 +320,8 @@ public partial class SettingsViewModel : ViewModelBase
             Strings.Settings_ResolutionDetail));
         Rows.Add(Choice("fps_cap_hz", Strings.Settings_FpsCap,
             new[] { "30", "40", "60" }, new[] { "30 fps", "40 fps", "60 fps" }, ""));
-        Rows.Add(Choice("renderer", Strings.Settings_Renderer,
-            new[] { "VULKAN", "GL" }, new[] { "Vulkan", Strings.Settings_OpenGlFallback },
-            Strings.Settings_RendererDetail));
 
-        Rows.Add(new SettingsHeader(Strings.Settings_HeaderCompat));
-        var presentMode = Choice("present_mode", Strings.Settings_PresentMode, PresentModes, PresentModeLabels,
-            Strings.Settings_PresentModeDetail);
-        Rows.Add(presentMode);
-        Rows.Add(Choice("bcn_emulation", Strings.Settings_Bcn,
-            new[] { "AUTO", "ON", "OFF" }, new[] { Strings.Common_Auto, Strings.Settings_Always, Strings.Settings_Never },
-            Strings.Settings_BcnDetail));
-        Rows.Add(Choice("shader_cache", Strings.Settings_ShaderCache, OnOff, OnOffLabels, Strings.Settings_ShaderCacheDetail));
-
-        BuildFrameGeneration(presentMode);
+        BuildFrameGeneration();
 
         // FFXIV.cfg only exists once the game has run, so the row shows greyed out until then.
         var config = GameSettingsPreset.ConfigPath(AppHost.FilesDir);
@@ -340,7 +349,7 @@ public partial class SettingsViewModel : ViewModelBase
         Rows.Add(optimize);
     }
 
-    private void BuildFrameGeneration(SettingsRow presentMode)
+    private void BuildFrameGeneration()
     {
         // lsfg-vk extracts its shaders from the player's own Lossless.dll, so nothing else here works
         // until that has been downloaded. xla.XlaSettings also checks for the file before arming the layer.
@@ -354,23 +363,21 @@ public partial class SettingsViewModel : ViewModelBase
         if (!installed)
             return;
 
-        // lsfg-vk judders on FIFO and holds steady on Mailbox, so turning it on moves FIFO over. The player
-        // can still pick FIFO again afterwards.
-        SettingsRow? enabled = null;
-        enabled = new SettingsRow(Strings.Settings_FrameGen, () =>
+        // lsfg-vk judders on FIFO and holds steady on Mailbox, so turning it on moves FIFO over (Advanced >
+        // Present mode). The player can still pick FIFO again afterwards.
+        var on = AppHost.Get("lsfg_enabled", OffOn[0]) == "ON";
+        Rows.Add(new SettingsRow(Strings.Settings_FrameGen, () =>
         {
             var value = AppHost.Cycle("lsfg_enabled", OffOn);
-            enabled!.Value = LabelOf(value, OffOn, OffOnLabels);
             if (value == "ON" && AppHost.Get("present_mode", PresentModes[0]) == "FIFO")
-            {
                 AppHost.Set("present_mode", "MAILBOX");
-                presentMode.Value = LabelOf("MAILBOX", PresentModes, PresentModeLabels);
-            }
+            Rebuild(); // its own options appear and disappear with it
         })
         {
             Value = LabelOf(AppHost.Get("lsfg_enabled", OffOn[0]), OffOn, OffOnLabels),
-        };
-        Rows.Add(enabled);
+        });
+        if (!on)
+            return;
         Rows.Add(Choice("lsfg_flow_scale", Strings.Settings_FlowScale,
             new[] { "0.80", "1.00", "0.65", "0.50" }, new[] { "80%", "100%", "65%", "50%" }, ""));
         Rows.Add(Choice("lsfg_performance", Strings.Settings_PerformanceMode, OnOff, OnOffLabels, ""));
@@ -401,7 +408,7 @@ public partial class SettingsViewModel : ViewModelBase
         finally
         {
             _fetchingLossless = false;
-            if (IsGraphicsTab)
+            if (IsDisplayTab)
                 Rebuild();
         }
     }
@@ -415,12 +422,17 @@ public partial class SettingsViewModel : ViewModelBase
             Strings.Settings_PresetDetail));
         Rows.Add(Choice("fex_multiblock", Strings.Settings_Multiblock, OnOff, OnOffLabels, Strings.Settings_MultiblockDetail));
         Rows.Add(Choice("fex_diskcache", Strings.Settings_CodeCache, OnOff, OnOffLabels, Strings.Settings_CodeCacheDetail));
-        BuildComponentRows("FEXCore", FexImport.Store(AppHost.FilesDir), RuntimeInstaller.StockFexVersion,
-            Strings.Settings_FexSource, FexImport.Import);
 
-        Rows.Add(new SettingsHeader(Strings.Settings_HeaderDxvk));
-        BuildComponentRows("DXVK", DxvkImport.Store(AppHost.FilesDir), RuntimeInstaller.StockDxvkVersion,
-            Strings.Settings_DxvkSource, DxvkImport.Import);
+        Rows.Add(new SettingsHeader(Strings.Settings_HeaderCompat));
+        Rows.Add(Choice("renderer", Strings.Settings_Renderer,
+            new[] { "VULKAN", "GL" }, new[] { "Vulkan", Strings.Settings_OpenGlFallback },
+            Strings.Settings_RendererDetail));
+        Rows.Add(Choice("present_mode", Strings.Settings_PresentMode, PresentModes, PresentModeLabels,
+            Strings.Settings_PresentModeDetail));
+        Rows.Add(Choice("bcn_emulation", Strings.Settings_Bcn,
+            new[] { "AUTO", "ON", "OFF" }, new[] { Strings.Common_Auto, Strings.Settings_Always, Strings.Settings_Never },
+            Strings.Settings_BcnDetail));
+        Rows.Add(Choice("shader_cache", Strings.Settings_ShaderCache, OnOff, OnOffLabels, Strings.Settings_ShaderCacheDetail));
 
         Rows.Add(new SettingsHeader("Wine"));
         Rows.Add(Choice("esync", "Esync", OnOff, OnOffLabels, Strings.Settings_EsyncDetail));

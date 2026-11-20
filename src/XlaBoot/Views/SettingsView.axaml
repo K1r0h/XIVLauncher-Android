@@ -59,18 +59,20 @@
         <TextBlock Classes="h1" Text="{x:Static loc:Strings.Nav_Settings}" VerticalAlignment="Center"/>
       </StackPanel>
 
-      <!-- Tabs scroll sideways when four don't fit (Dalamud Repos only shows while Dalamud is on). -->
+      <!-- Tabs scroll sideways when they don't all fit. -->
       <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
                     Margin="0,8,0,4">
         <StackPanel Orientation="Horizontal">
           <Button Classes="tab" Classes.selected="{Binding IsGeneralTab}" Content="{x:Static loc:Strings.Settings_TabGeneral}"
                   Command="{Binding SelectTabCommand}" CommandParameter="0"/>
-          <Button Classes="tab" Classes.selected="{Binding IsGraphicsTab}" Content="{x:Static loc:Strings.Settings_TabGraphics}"
+          <Button Classes="tab" Classes.selected="{Binding IsDisplayTab}" Content="{x:Static loc:Strings.Settings_TabDisplay}"
                   Command="{Binding SelectTabCommand}" CommandParameter="1"/>
-          <Button Classes="tab" Classes.selected="{Binding IsAdvancedTab}" Content="{x:Static loc:Strings.Settings_TabAdvanced}"
+          <Button Classes="tab" Classes.selected="{Binding IsComponentsTab}" Content="{x:Static loc:Strings.Settings_TabComponents}"
                   Command="{Binding SelectTabCommand}" CommandParameter="2"/>
-          <Button Classes="tab" Classes.selected="{Binding IsReposTab}" Content="{x:Static loc:Strings.Settings_TabRepos}"
-                  Command="{Binding SelectTabCommand}" CommandParameter="3" IsVisible="{Binding ShowReposTab}"/>
+          <Button Classes="tab" Classes.selected="{Binding IsDalamudTab}" Content="{x:Static loc:Strings.Settings_TabDalamud}"
+                  Command="{Binding SelectTabCommand}" CommandParameter="3"/>
+          <Button Classes="tab" Classes.selected="{Binding IsAdvancedTab}" Content="{x:Static loc:Strings.Settings_TabAdvanced}"
+                  Command="{Binding SelectTabCommand}" CommandParameter="4"/>
         </StackPanel>
       </ScrollViewer>
 

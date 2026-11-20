@@ -151,14 +151,20 @@
   <data name="Settings_TabGeneral" xml:space="preserve">
     <value>一般</value>
   </data>
-  <data name="Settings_TabGraphics" xml:space="preserve">
-    <value>グラフィック</value>
+  <data name="Settings_TabDisplay" xml:space="preserve">
+    <value>表示</value>
+  </data>
+  <data name="Settings_TabComponents" xml:space="preserve">
+    <value>コンポーネント</value>
+  </data>
+  <data name="Settings_TabDalamud" xml:space="preserve">
+    <value>Dalamud</value>
+  </data>
+  <data name="Settings_HeaderLauncher" xml:space="preserve">
+    <value>ランチャー</value>
   </data>
   <data name="Settings_TabAdvanced" xml:space="preserve">
     <value>詳細</value>
-  </data>
-  <data name="Settings_TabRepos" xml:space="preserve">
-    <value>Dalamudリポジトリ</value>
   </data>
   <data name="Settings_Footer" xml:space="preserve">
     <value>これらの設定は次回のゲーム起動時に適用されます。</value>
