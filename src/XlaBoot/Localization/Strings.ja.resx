@@ -19,6 +19,18 @@
   <data name="Home_AboutDetail" xml:space="preserve">
     <value>クレジット、ライセンスなど</value>
   </data>
+  <data name="Home_Important" xml:space="preserve">
+    <value>重要なお知らせ</value>
+  </data>
+  <data name="Home_News" xml:space="preserve">
+    <value>ニュース</value>
+  </data>
+  <data name="Home_Topics" xml:space="preserve">
+    <value>トピックス</value>
+  </data>
+  <data name="Home_NewsUnavailable" xml:space="preserve">
+    <value>ニュースを読み込めませんでした。</value>
+  </data>
   <data name="Login_Intro" xml:space="preserve">
     <value>FFXIVを起動するには、スクウェア・エニックス アカウントでログインしてください。</value>
   </data>

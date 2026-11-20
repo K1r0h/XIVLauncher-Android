@@ -28,6 +28,9 @@ public partial class MainViewModel
 
     public LogsViewModel Logs { get; } = new();
 
+    /// <summary>The home page's news panel (banners, notices, maintenance, events).</summary>
+    public NewsViewModel News { get; } = new();
+
     partial void OnPageChanged(LauncherPage value)
     {
         switch (value)
@@ -121,5 +124,6 @@ public partial class MainViewModel
                 break;
         }
         OnPropertyChanged(nameof(PlayDetail));
+        News.Refresh(GameLanguage);
     }
 }

@@ -88,6 +88,26 @@
     </Style>
   </UserControl.Styles>
 
+  <UserControl.Resources>
+    <!-- One headline row: optional tag chip (Maintenance, Recovery, Important…), title, date. -->
+    <DataTemplate x:Key="NewsRow" x:DataType="vm:NewsItem">
+      <Button Background="Transparent" BorderThickness="0" Padding="10,8" HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Stretch" Command="{Binding OpenCommand}">
+        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+          <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasTag}"
+                      Margin="0,0,0,3">
+            <Border Background="{StaticResource XlaAccentBrush}" CornerRadius="4" Padding="6,1">
+              <TextBlock Text="{Binding Tag}" FontSize="11" FontWeight="SemiBold" Foreground="White"/>
+            </Border>
+          </StackPanel>
+          <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding Title}" FontSize="13.5" TextWrapping="Wrap"/>
+          <TextBlock Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Classes="dim" Text="{Binding Date}" FontSize="12"
+                     VerticalAlignment="Center" Margin="10,0,0,0"/>
+        </Grid>
+      </Button>
+    </DataTemplate>
+  </UserControl.Resources>
+
   <Grid RowDefinitions="*,Auto" Background="{StaticResource XlaGroundBrush}">
 
     <!-- ================================ Home ================================ -->
@@ -160,6 +180,44 @@
               <PathIcon Grid.Column="2" Classes="chevron" Data="{x:Static views:Icons.ChevronRight}"/>
             </Grid>
           </Button>
+
+          <!-- News from the official launcher's feeds: banner carousel, then notices, news (maintenance etc.)
+               and topics (events). Every entry opens its Lodestone page. -->
+          <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
+                        IsVisible="{Binding News.HasBanners}" Margin="0,6,0,0">
+            <ItemsControl ItemsSource="{Binding News.Banners}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="10"/></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:NewsBanner">
+                  <Button Padding="0" Background="Transparent" BorderThickness="0" Command="{Binding OpenCommand}">
+                    <Border CornerRadius="10" ClipToBounds="True">
+                      <Image Source="{Binding Image}" Height="120" Stretch="Uniform"/>
+                    </Border>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+
+          <TextBlock Classes="dim" Text="{x:Static loc:Strings.Home_NewsUnavailable}" FontSize="12.5"
+                     IsVisible="{Binding News.Failed}" Margin="4,0"/>
+
+          <TextBlock Classes="caption" Text="{x:Static loc:Strings.Home_Important}" IsVisible="{Binding News.HasPinned}"/>
+          <Border Classes="card" Padding="4" IsVisible="{Binding News.HasPinned}">
+            <ItemsControl ItemsSource="{Binding News.Pinned}" ItemTemplate="{StaticResource NewsRow}"/>
+          </Border>
+
+          <TextBlock Classes="caption" Text="{x:Static loc:Strings.Home_News}" IsVisible="{Binding News.HasNews}"/>
+          <Border Classes="card" Padding="4" IsVisible="{Binding News.HasNews}">
+            <ItemsControl ItemsSource="{Binding News.News}" ItemTemplate="{StaticResource NewsRow}"/>
+          </Border>
+
+          <TextBlock Classes="caption" Text="{x:Static loc:Strings.Home_Topics}" IsVisible="{Binding News.HasTopics}"/>
+          <Border Classes="card" Padding="4" IsVisible="{Binding News.HasTopics}">
+            <ItemsControl ItemsSource="{Binding News.Topics}" ItemTemplate="{StaticResource NewsRow}"/>
+          </Border>
         </StackPanel>
       </StackPanel>
     </ScrollViewer>
