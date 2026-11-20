@@ -169,16 +169,13 @@
       <views:SkyBackdrop/>
       <!-- ScrollViewer so the fields stay reachable when the soft keyboard covers half the screen. -->
       <ScrollViewer>
-        <StackPanel HorizontalAlignment="Stretch" Spacing="8" Margin="24,12,24,24" MaxWidth="420">
-          <Button Classes="icon" HorizontalAlignment="Left" Margin="-12,0,0,0"
-                  Command="{Binding NavigateCommand}" CommandParameter="Home" IsEnabled="{Binding !IsBusy}">
-            <PathIcon Data="{x:Static views:Icons.ArrowBack}"/>
-          </Button>
-
-          <views:CrystalLogo Width="80" Height="113" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+        <StackPanel HorizontalAlignment="Stretch" Spacing="6" Margin="24,12,24,24" MaxWidth="420">
+          <!-- The back button sits over the page (below) rather than in this column, so a phone shows the whole
+               form down to the Log in button without scrolling. -->
+          <views:CrystalLogo Width="70" Height="99" HorizontalAlignment="Center" Margin="0,4,0,0"/>
           <TextBlock Text="XIVLauncher" FontSize="30" FontWeight="SemiBold" HorizontalAlignment="Center"/>
           <TextBlock Text="{x:Static loc:Strings.Login_Intro}" Foreground="#C8D4F0"
-                     HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,18"/>
+                     HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,10"/>
 
           <TextBlock Classes="caption" Text="{x:Static loc:Strings.Login_Username}"/>
           <Grid>
@@ -249,6 +246,10 @@
                      TextWrapping="Wrap" Margin="0,6,0,0" Foreground="#C8D4F0"/>
         </StackPanel>
       </ScrollViewer>
+      <Button Classes="icon" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,12,0,0"
+              Command="{Binding NavigateCommand}" CommandParameter="Home" IsEnabled="{Binding !IsBusy}">
+        <PathIcon Data="{x:Static views:Icons.ArrowBack}"/>
+      </Button>
     </Grid>
 
     <!-- ================================ Settings ================================ -->
