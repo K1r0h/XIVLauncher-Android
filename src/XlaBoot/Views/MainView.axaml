@@ -86,6 +86,43 @@
     <Style Selector="Border.successTile">
       <Setter Property="Background" Value="#1E6B35"/>
     </Style>
+    <!-- Home's Login pill: gradient + glow on the Border, the Button inside transparent. -->
+    <Style Selector="Border.loginPill">
+      <Setter Property="CornerRadius" Value="34"/>
+      <Setter Property="Background">
+        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+          <GradientStop Offset="0" Color="#6FA8FF"/>
+          <GradientStop Offset="0.55" Color="#4C8DFF"/>
+          <GradientStop Offset="1" Color="#2F63D6"/>
+        </LinearGradientBrush>
+      </Setter>
+      <Setter Property="BoxShadow" Value="0 6 22 0 #664C8DFF"/>
+    </Style>
+    <Style Selector="Button.loginPill">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="CornerRadius" Value="34"/>
+      <Setter Property="Padding" Value="0,13"/>
+      <Setter Property="MinHeight" Value="68"/>
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="RenderTransform" Value="scale(1)"/>
+      <Setter Property="Transitions">
+        <Transitions>
+          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.08"/>
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Button.loginPill:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    <Style Selector="Button.loginPill:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#26000000"/>
+    </Style>
+    <Style Selector="Button.loginPill:pressed">
+      <Setter Property="RenderTransform" Value="scale(0.97)"/>
+    </Style>
   </UserControl.Styles>
 
   <UserControl.Resources>
@@ -185,17 +222,24 @@
             </Grid>
           </Button>
 
-          <!-- Login: one solid accent pill (fully rounded ends), label and game version centred. -->
-          <Button Classes="primary" Command="{Binding NavigateCommand}" CommandParameter="Login"
-                  IsVisible="{Binding !IsGameMissing}" HorizontalAlignment="Stretch"
-                  HorizontalContentAlignment="Center" Padding="0,14" CornerRadius="100">
-            <StackPanel HorizontalAlignment="Center" Spacing="2">
-              <TextBlock Text="{x:Static loc:Strings.Home_Play}" FontSize="17" FontWeight="SemiBold"
-                         HorizontalAlignment="Center"/>
-              <TextBlock Text="{Binding PlayDetail}" FontSize="12.5" Opacity="0.8" HorizontalAlignment="Center"
-                         TextAlignment="Center" TextWrapping="Wrap"/>
-            </StackPanel>
-          </Button>
+          <!-- Login: the main action. A blue gradient pill with a soft glow under it so it sits above the dark page,
+               a play icon before the label and the short game version under it, all centred. The glow is on the
+               Border (a Button's own template has no shadow); the Button inside stays transparent and only
+               darkens and shrinks a little while pressed. -->
+          <Border Classes="loginPill" IsVisible="{Binding !IsGameMissing}" Margin="0,10,0,0">
+            <Button Classes="loginPill" Command="{Binding NavigateCommand}" CommandParameter="Login">
+              <StackPanel HorizontalAlignment="Center" Spacing="1">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                  <PathIcon Data="{x:Static views:Icons.Play}" Width="16" Height="16" Foreground="White"
+                            VerticalAlignment="Center"/>
+                  <TextBlock Text="{x:Static loc:Strings.Home_Play}" FontSize="18" FontWeight="Bold"
+                             Foreground="White" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock Text="{Binding PlayDetail}" FontSize="11.5" FontWeight="Light" Foreground="White"
+                           Opacity="0.7" HorizontalAlignment="Center" TextAlignment="Center"/>
+              </StackPanel>
+            </Button>
+          </Border>
 
 
 

@@ -97,7 +97,17 @@ public partial class MainViewModel
     /// is there (it only shows when the game is missing or unreadable, as the way to fix that).
     /// </summary>
     public string PlayDetail => SafeModeNextLaunch ? Strings.Home_PlaySafe
-        : IsGameMissing || GameDetail.Length == 0 ? Strings.Home_PlayDetail : GameDetail;
+        : IsGameMissing || _shortVersion.Length == 0 ? Strings.Home_PlayDetail
+        : Loc.F(Strings.Home_VersionShort, _shortVersion);
+
+    /// <summary>The game version without its always-zero build fields: 2026.11.03.0000.0000 → 2026.11.03.</summary>
+    private string _shortVersion = "";
+
+    private static string ShortVersion(string version)
+    {
+        var parts = version.Split('.');
+        return parts.Length > 3 ? string.Join('.', parts, 0, 3) : version;
+    }
 
     public string VersionText => AppHost.VersionName.Length > 0
         ? $"{AppHost.VersionName} ({AppHost.VersionCode})"
@@ -110,6 +120,7 @@ public partial class MainViewModel
         switch (game.Status)
         {
             case GameStatus.Present:
+                _shortVersion = ShortVersion(game.Version);
                 GameTitle = Strings.Home_GameInstalled;
                 GameDetail = game.Version.Length > 0 ? Loc.F(Strings.Home_Version, game.Version) : Strings.Home_VersionUnknown;
                 GameIcon = Icons.CheckCircle;
