@@ -123,6 +123,52 @@
     <Style Selector="Button.loginPill:pressed">
       <Setter Property="RenderTransform" Value="scale(0.97)"/>
     </Style>
+    <!-- Login page variant: one line, so a shorter pill. Dimmed while logging in. -->
+    <Style Selector="Border.loginPill.compact">
+      <Setter Property="CornerRadius" Value="26"/>
+      <Setter Property="BoxShadow" Value="0 5 18 0 #554C8DFF"/>
+    </Style>
+    <Style Selector="Button.loginPill.compact">
+      <Setter Property="CornerRadius" Value="26"/>
+      <Setter Property="MinHeight" Value="52"/>
+      <Setter Property="Padding" Value="0,14"/>
+    </Style>
+    <Style Selector="Border.loginPill.busy">
+      <Setter Property="Opacity" Value="0.5"/>
+    </Style>
+
+    <!-- Banner position dots; the current one widens into a white bar. -->
+    <Style Selector="Border.bannerDot">
+      <Setter Property="Width" Value="6"/>
+      <Setter Property="Height" Value="6"/>
+      <Setter Property="CornerRadius" Value="3"/>
+      <Setter Property="Background" Value="#80FFFFFF"/>
+      <Setter Property="Transitions">
+        <Transitions>
+          <DoubleTransition Property="Width" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Border.bannerDot.current">
+      <Setter Property="Width" Value="18"/>
+      <Setter Property="Background" Value="White"/>
+    </Style>
+
+    <!-- Each page fades and slides up a little when it is opened. -->
+    <Style Selector=":is(Control).page[IsVisible=True]">
+      <Style.Animations>
+        <Animation Duration="0:0:0.22" Easing="CubicEaseOut">
+          <KeyFrame Cue="0%">
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="TranslateTransform.Y" Value="14"/>
+          </KeyFrame>
+          <KeyFrame Cue="100%">
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="TranslateTransform.Y" Value="0"/>
+          </KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
   </UserControl.Styles>
 
   <UserControl.Resources>
@@ -148,7 +194,7 @@
   <Grid RowDefinitions="*,Auto" Background="{StaticResource XlaGroundBrush}">
 
     <!-- ================================ Home ================================ -->
-    <ScrollViewer Grid.Row="0" IsVisible="{Binding IsHomePage}">
+    <ScrollViewer Grid.Row="0" Classes="page" IsVisible="{Binding IsHomePage}">
       <StackPanel>
         <!-- Hero: sky, title, banners (or the crystal) -->
         <Grid Height="270">
@@ -167,7 +213,28 @@
                 Margin="16,0,16,14" Height="150">
             <Button Padding="0" Background="Transparent" BorderThickness="0" Command="{Binding News.OpenBannerCommand}">
               <Border CornerRadius="10" ClipToBounds="True">
-                <Image Source="{Binding News.CurrentBanner.Image}" Height="150" Stretch="Uniform"/>
+                <Grid>
+                  <!-- The next banner fades in over the last one. -->
+                  <TransitioningContentControl Content="{Binding News.CurrentBanner}">
+                    <TransitioningContentControl.PageTransition>
+                      <CrossFade Duration="0:0:0.45"/>
+                    </TransitioningContentControl.PageTransition>
+                    <TransitioningContentControl.ContentTemplate>
+                      <DataTemplate x:DataType="vm:NewsBanner">
+                        <Image Source="{Binding Image}" Height="150" Stretch="Uniform"/>
+                      </DataTemplate>
+                    </TransitioningContentControl.ContentTemplate>
+                  </TransitioningContentControl>
+                  <!-- A soft dark edge along the bottom, so the dots read on any banner. -->
+                  <Border Height="44" VerticalAlignment="Bottom" IsHitTestVisible="False">
+                    <Border.Background>
+                      <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                        <GradientStop Offset="0" Color="#00000000"/>
+                        <GradientStop Offset="1" Color="#99000000"/>
+                      </LinearGradientBrush>
+                    </Border.Background>
+                  </Border>
+                </Grid>
               </Border>
             </Button>
             <Grid ColumnDefinitions="*,2*,*">
@@ -183,10 +250,18 @@
                 <PathIcon Data="{x:Static views:Icons.ChevronRight}" Width="18" Height="18" Foreground="#CCFFFFFF"/>
               </Button>
             </Grid>
-            <Border Background="#99000000" CornerRadius="8" Padding="6,1" Margin="0,0,8,6"
-                    HorizontalAlignment="Right" VerticalAlignment="Bottom" IsHitTestVisible="False">
-              <TextBlock Text="{Binding News.BannerPosition}" FontSize="11" Foreground="White"/>
-            </Border>
+            <!-- Which banner is showing: one dot each, the current one stretched into a bar. -->
+            <ItemsControl ItemsSource="{Binding News.BannerDots}" HorizontalAlignment="Center"
+                          VerticalAlignment="Bottom" Margin="0,0,0,8" IsHitTestVisible="False">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="5"/></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:BannerDot">
+                  <Border Classes="bannerDot" Classes.current="{Binding IsCurrent}"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
           </Grid>
         </Grid>
 
@@ -268,7 +343,7 @@
     </ScrollViewer>
 
     <!-- ================================ Login ================================ -->
-    <Grid Grid.Row="0" IsVisible="{Binding IsLoginPage}">
+    <Grid Grid.Row="0" Classes="page" IsVisible="{Binding IsLoginPage}">
       <views:SkyBackdrop/>
       <!-- ScrollViewer so the fields stay reachable when the soft keyboard covers half the screen. -->
       <ScrollViewer>
@@ -341,8 +416,17 @@
             </StackPanel>
           </Button>
 
-          <Button Classes="primary" Content="{x:Static loc:Strings.Login_Button}" Command="{Binding LoginAndPlayCommand}"
-                  IsEnabled="{Binding !IsBusy}" Margin="0,14,0,0"/>
+          <!-- Same gradient pill as Home's Login, so the two pages match. -->
+          <Border Classes="loginPill compact" Classes.busy="{Binding IsBusy}" Margin="0,14,0,0">
+            <Button Classes="loginPill compact" Command="{Binding LoginAndPlayCommand}" IsEnabled="{Binding !IsBusy}">
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                <PathIcon Data="{x:Static views:Icons.Play}" Width="15" Height="15" Foreground="White"
+                          VerticalAlignment="Center"/>
+                <TextBlock Text="{x:Static loc:Strings.Login_Button}" FontSize="16" FontWeight="Bold"
+                           Foreground="White" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+          </Border>
 
           <ProgressBar IsIndeterminate="True" Height="4" Margin="40,6,40,0" IsVisible="{Binding IsBusy}"/>
           <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" TextAlignment="Center"
@@ -357,12 +441,12 @@
 
     <!-- ================================ Settings ================================ -->
     <!-- The Border keeps MainViewModel as its DataContext so the visibility binding resolves. -->
-    <Border Grid.Row="0" IsVisible="{Binding IsSettingsPage}">
+    <Border Grid.Row="0" Classes="page" IsVisible="{Binding IsSettingsPage}">
       <views:SettingsView DataContext="{Binding Settings}"/>
     </Border>
 
     <!-- ================================ Logs ================================ -->
-    <Grid Grid.Row="0" RowDefinitions="Auto,Auto,Auto,*" Background="{StaticResource XlaPageBrush}"
+    <Grid Grid.Row="0" Classes="page" RowDefinitions="Auto,Auto,Auto,*" Background="{StaticResource XlaPageBrush}"
           IsVisible="{Binding IsLogsPage}">
       <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="18,18,10,4">
         <Border Grid.Column="0" Classes="tile" Width="46" Height="46" Margin="0,0,12,0">
@@ -418,7 +502,7 @@
     </Grid>
 
     <!-- ================================ About ================================ -->
-    <Grid Grid.Row="0" IsVisible="{Binding IsAboutPage}">
+    <Grid Grid.Row="0" Classes="page" IsVisible="{Binding IsAboutPage}">
       <views:SkyBackdrop/>
       <ScrollViewer>
         <StackPanel Margin="20,12,20,24" Spacing="10" MaxWidth="480">

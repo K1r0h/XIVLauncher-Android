@@ -26,6 +26,12 @@ public sealed class NewsItem
     public IRelayCommand OpenCommand => new RelayCommand(() => NewsViewModel.OpenUrl(Url));
 }
 
+/// <summary>One dot under the banner carousel; the current banner's dot is drawn as a short bar.</summary>
+public sealed partial class BannerDot : ObservableObject
+{
+    [ObservableProperty] private bool _isCurrent;
+}
+
 /// <summary>A banner from the official launcher's carousel, with its image already downloaded.</summary>
 public sealed class NewsBanner
 {
@@ -62,6 +68,9 @@ public partial class NewsViewModel : ObservableObject
     /// <summary>The one banner on show; the header steps through them with taps on its left and right edges.</summary>
     [ObservableProperty] private NewsBanner? _currentBanner;
     [ObservableProperty] private string _bannerPosition = "";
+
+    /// <summary>One dot per banner, the current one highlighted.</summary>
+    public ObservableCollection<BannerDot> BannerDots { get; } = new();
     private int _bannerIndex;
 
     [RelayCommand]
@@ -111,6 +120,12 @@ public partial class NewsViewModel : ObservableObject
         _bannerIndex = ((index % Banners.Count) + Banners.Count) % Banners.Count;
         CurrentBanner = Banners[_bannerIndex];
         BannerPosition = $"{_bannerIndex + 1} / {Banners.Count}";
+        while (BannerDots.Count < Banners.Count)
+            BannerDots.Add(new BannerDot());
+        while (BannerDots.Count > Banners.Count)
+            BannerDots.RemoveAt(BannerDots.Count - 1);
+        for (var i = 0; i < BannerDots.Count; i++)
+            BannerDots[i].IsCurrent = i == _bannerIndex;
     }
 
     /// <summary>Called whenever Home is shown; does nothing while a load is running or the last one is recent.</summary>
