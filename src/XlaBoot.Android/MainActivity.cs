@@ -49,6 +49,7 @@ public class MainActivity : AvaloniaMainActivity<App>
             previous.Content = null;
         base.OnCreate(savedInstanceState);
         _current = new System.WeakReference<MainActivity>(this);
+        BindActivityHooks();
 
         // Let the window span the display cutout, so the strip beside the camera in landscape is ours
         // to paint (AppHost.SetWindowBackground fills it with whatever Avalonia paints) instead of a
@@ -62,16 +63,72 @@ public class MainActivity : AvaloniaMainActivity<App>
         }
     }
 
-    protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
+    /// <summary>
+    /// The launcher's hooks that need a live activity (the X server swap, pickers, dialogs, window colour). Bound
+    /// again by every new MainActivity: CustomizeAppBuilder runs once per process, so after Back closed the
+    /// activity and the player reopened the app, these still pointed at the destroyed one and Log in &amp; Play
+    /// started the game behind a launcher that never switched to the game view.
+    /// </summary>
+    private void BindActivityHooks()
     {
-        var vm = typeof(XlaBoot.ViewModels.MainViewModel);
-        XlaBoot.ViewModels.MainViewModel.NativeLibDir = ApplicationInfo!.NativeLibraryDir!;
-        XlaBoot.ViewModels.MainViewModel.FilesDir = FilesDir!.AbsolutePath;
         XlaBoot.ViewModels.MainViewModel.ShowXServer = ShowXServer;
         XlaBoot.ViewModels.MainViewModel.LoadCredentials = LoadCredentials;
         XlaBoot.ViewModels.MainViewModel.SaveCredentials = SaveCredentials;
         XlaBoot.ViewModels.MainViewModel.LoadLosslessSteam = LoadLosslessSteam;
         XlaBoot.ViewModels.MainViewModel.SaveLosslessSteam = SaveLosslessSteam;
+        AppHost.FlushSettings = () => XServerHost.SyncSettings(this);
+        AppHost.PickFolder = PickFolder;
+        AppHost.PickFile = PickArchive;
+        AppHost.SaveFileAs = SaveFileAs;
+        AppHost.RequestStoragePermission = RequestStoragePermission;
+        AppHost.OpenUrl = uri => RunOnUiThread(() =>
+        {
+            try { StartActivity(new Intent(Intent.ActionView, global::Android.Net.Uri.Parse(uri.AbsoluteUri))); }
+            catch (System.Exception e) { System.Console.WriteLine("XlaLauncher: no browser: " + e.GetType().Name); }
+        });
+        AppHost.IsBackgroundAllowed = () =>
+        {
+            try
+            {
+                var power = (global::Android.OS.PowerManager?)GetSystemService(PowerService);
+                return power?.IsIgnoringBatteryOptimizations(PackageName!) ?? true;
+            }
+            catch (System.Exception)
+            {
+                return true; // cannot tell; do not nag
+            }
+        };
+
+        AppHost.RequestBackgroundAllowed = () => RunOnUiThread(() =>
+        {
+            try
+            {
+                StartActivity(new Intent(
+                    global::Android.Provider.Settings.ActionRequestIgnoreBatteryOptimizations,
+                    global::Android.Net.Uri.Parse("package:" + PackageName)));
+            }
+            catch (System.Exception e)
+            {
+                System.Console.WriteLine("XlaLauncher: battery exemption dialog unavailable: " + e.GetType().Name);
+            }
+        });
+
+        AppHost.RequestAllFilesAccess = RequestAllFilesAccess;
+
+        AppHost.SetWindowBackground = argb => RunOnUiThread(() =>
+        {
+            System.Console.WriteLine($"XlaLauncher: window background -> #{argb:X8}");
+            Window?.SetBackgroundDrawable(new global::Android.Graphics.Drawables.ColorDrawable(
+                new global::Android.Graphics.Color(unchecked((int)argb))));
+        });
+    }
+
+    protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
+    {
+        var vm = typeof(XlaBoot.ViewModels.MainViewModel);
+        BindActivityHooks();
+        XlaBoot.ViewModels.MainViewModel.NativeLibDir = ApplicationInfo!.NativeLibraryDir!;
+        XlaBoot.ViewModels.MainViewModel.FilesDir = FilesDir!.AbsolutePath;
 #if DEBUG
         // adb test hooks (am start --ez xla_autorun|xla_autologin true). Release builds ignore intent extras.
         XlaBoot.ViewModels.MainViewModel.AutoRunWineTest = Intent?.GetBooleanExtra("xla_autorun", false) ?? false;
@@ -91,13 +148,8 @@ public class MainActivity : AvaloniaMainActivity<App>
         AppHost.SetSetting = (key, value) => Prefs.Edit()!.PutString(key, value)!.Apply();
         // "System default" for the launcher language: Java's locale is the phone's, whatever .NET's culture says.
         XlaBoot.Localization.Loc.SystemLanguage = Java.Util.Locale.Default.Language;
-        AppHost.FlushSettings = () => XServerHost.SyncSettings(this);
-        AppHost.PickFolder = PickFolder;
-        AppHost.PickFile = PickArchive;
-        AppHost.SaveFileAs = SaveFileAs;
         AppHost.DeviceDescription = DescribeDevice();
         XlaBoot.ProcessExits.Recent = RecentExits;
-        AppHost.RequestStoragePermission = RequestStoragePermission;
         AppHost.CacheDir = CacheDir!.AbsolutePath;
         try
         {
@@ -106,11 +158,6 @@ public class MainActivity : AvaloniaMainActivity<App>
             AppHost.VersionName = info.VersionName ?? "";
         }
         catch (System.Exception) { /* no update check without a known version */ }
-        AppHost.OpenUrl = uri => RunOnUiThread(() =>
-        {
-            try { StartActivity(new Intent(Intent.ActionView, global::Android.Net.Uri.Parse(uri.AbsoluteUri))); }
-            catch (System.Exception e) { System.Console.WriteLine("XlaLauncher: no browser: " + e.GetType().Name); }
-        });
 
         // StatFs rather than DriveInfo: on Android's emulated storage DriveInfo is unreliable, and
         // upstream's own space check (PlatformHelpers.GetDiskFreeSpace -> new DriveInfo) is the most
@@ -165,41 +212,6 @@ public class MainActivity : AvaloniaMainActivity<App>
             KeepAliveService.Start(context, keepAliveTitle, step, fraction);
         };
 
-        AppHost.IsBackgroundAllowed = () =>
-        {
-            try
-            {
-                var power = (global::Android.OS.PowerManager?)GetSystemService(PowerService);
-                return power?.IsIgnoringBatteryOptimizations(PackageName!) ?? true;
-            }
-            catch (System.Exception)
-            {
-                return true; // cannot tell; do not nag
-            }
-        };
-
-        AppHost.RequestBackgroundAllowed = () => RunOnUiThread(() =>
-        {
-            try
-            {
-                StartActivity(new Intent(
-                    global::Android.Provider.Settings.ActionRequestIgnoreBatteryOptimizations,
-                    global::Android.Net.Uri.Parse("package:" + PackageName)));
-            }
-            catch (System.Exception e)
-            {
-                System.Console.WriteLine("XlaLauncher: battery exemption dialog unavailable: " + e.GetType().Name);
-            }
-        });
-
-        AppHost.RequestAllFilesAccess = RequestAllFilesAccess;
-
-        AppHost.SetWindowBackground = argb => RunOnUiThread(() =>
-        {
-            System.Console.WriteLine($"XlaLauncher: window background -> #{argb:X8}");
-            Window?.SetBackgroundDrawable(new global::Android.Graphics.Drawables.ColorDrawable(
-                new global::Android.Graphics.Color(unchecked((int)argb))));
-        });
 #if DEBUG
         // Points provisioning at a runtime bundle other than the release host, e.g. a local copy pushed
         // with adb (/sdcard/xla-bundle), so a new runtime is tested through the real update path.
