@@ -3,6 +3,8 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using XlaBoot.Localization;
@@ -25,6 +27,31 @@ public sealed partial class LogSource : ObservableObject
     }
 }
 
+/// <summary>One line of a log, coloured by severity so errors stand out while scrolling.</summary>
+public sealed class LogLine
+{
+    private static readonly IBrush Normal = new ImmutableSolidColorBrush(Color.Parse("#C8D4F0"));
+    private static readonly IBrush Warning = new ImmutableSolidColorBrush(Color.Parse("#E5C07B"));
+    private static readonly IBrush Error = new ImmutableSolidColorBrush(Color.Parse("#E06C75"));
+
+    public string Text { get; }
+    public IBrush Foreground { get; }
+
+    public LogLine(string text)
+    {
+        Text = text;
+        Foreground = IsError(text) ? Error : IsWarning(text) ? Warning : Normal;
+    }
+
+    // Dalamud/Serilog ([ERR], [FTL], [WRN]), Wine (err:, warn:, fixme: stays normal) and plain words.
+    private static bool IsError(string t) =>
+        t.Contains("[ERR]") || t.Contains("[FTL]") || t.Contains(" err:") || t.StartsWith("err:")
+        || t.Contains("Exception") || t.Contains("FATAL");
+
+    private static bool IsWarning(string t) =>
+        t.Contains("[WRN]") || t.Contains(" warn:") || t.StartsWith("warn:");
+}
+
 /// <summary>
 /// The Logs page: the tail of Dalamud's and Wine's logs, readable on the phone without adb, and copyable into a bug
 /// report. Only logs that exist are offered.
@@ -36,8 +63,19 @@ public partial class LogsViewModel : ViewModelBase
 
     public ObservableCollection<LogSource> Sources { get; } = new();
 
+    /// <summary>The whole tail as one string: what Copy puts on the clipboard.</summary>
     [ObservableProperty]
     private string _text = "";
+
+    /// <summary>
+    /// The same tail split into lines for display. One text block per line in a virtualizing list lays out only the
+    /// lines on screen; one SelectableTextBlock holding all ~96 KB re-laid out the whole log on every scroll step.
+    /// </summary>
+    [ObservableProperty]
+    private System.Collections.Generic.IReadOnlyList<LogLine> _lines = Array.Empty<LogLine>();
+
+    partial void OnTextChanged(string value) =>
+        Lines = value.Split('\n').Select(l => new LogLine(l.TrimEnd('\r'))).ToArray();
 
     [ObservableProperty]
     private string _detail = "";

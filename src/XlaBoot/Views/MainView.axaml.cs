@@ -106,9 +106,21 @@ public partial class MainView : UserControl
         base.OnDataContextChanged(e);
         if (_viewModel != null)
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        if (_viewModel != null)
+            _viewModel.Logs.PropertyChanged -= OnLogsPropertyChanged;
         _viewModel = DataContext as MainViewModel;
         if (_viewModel != null)
+        {
             _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+            _viewModel.Logs.PropertyChanged += OnLogsPropertyChanged;
+        }
+    }
+
+    /// <summary>Another log picked, or the same one reloaded: open it at the newest line too.</summary>
+    private void OnLogsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(LogsViewModel.Lines))
+            Dispatcher.UIThread.Post(() => LogScroll.ScrollToEnd(), DispatcherPriority.Background);
     }
 
     /// <summary>
