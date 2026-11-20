@@ -65,10 +65,36 @@ public partial class NewsViewModel : ObservableObject
     private int _bannerIndex;
 
     [RelayCommand]
-    private void PreviousBanner() => ShowBanner(_bannerIndex - 1);
+    private void PreviousBanner()
+    {
+        ShowBanner(_bannerIndex - 1);
+        _bannerTimer?.Stop(); // a manual step gets a full interval before the next automatic one
+        _bannerTimer?.Start();
+    }
 
     [RelayCommand]
-    private void NextBanner() => ShowBanner(_bannerIndex + 1);
+    private void NextBanner()
+    {
+        ShowBanner(_bannerIndex + 1);
+        _bannerTimer?.Stop();
+        _bannerTimer?.Start();
+    }
+
+    /// <summary>Steps to the next banner on its own every couple of seconds while banners are on show.</summary>
+    private static readonly TimeSpan BannerInterval = TimeSpan.FromSeconds(2);
+    private DispatcherTimer? _bannerTimer;
+
+    private void UpdateBannerTimer()
+    {
+        if (HasBanners && Banners.Count > 1)
+        {
+            _bannerTimer ??= new DispatcherTimer(BannerInterval, DispatcherPriority.Background,
+                (_, _) => ShowBanner(_bannerIndex + 1));
+            _bannerTimer.Start();
+        }
+        else
+            _bannerTimer?.Stop();
+    }
 
     [RelayCommand]
     private void OpenBanner() => OpenUrl(CurrentBanner?.Url);
@@ -164,6 +190,7 @@ public partial class NewsViewModel : ObservableObject
         HasNews = _newsEnabled && News.Count > 0;
         HasTopics = _newsEnabled && Topics.Count > 0;
         ShowFailure = _newsEnabled && Failed;
+        UpdateBannerTimer();
     }
 
     [ObservableProperty] private bool _showFailure;
