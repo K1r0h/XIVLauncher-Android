@@ -113,9 +113,12 @@
     <!-- ================================ Home ================================ -->
     <ScrollViewer Grid.Row="0" IsVisible="{Binding IsHomePage}">
       <StackPanel>
-        <!-- Hero: sky, title, banners -->
+        <!-- Hero: sky, title, banners (or the crystal) -->
         <Grid Height="270">
           <views:SkyBackdrop/>
+          <!-- The crystal takes the banner's place whenever there is none (turned off, still loading, or offline). -->
+          <views:CrystalLogo Width="120" Height="170" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                             Margin="0,0,34,26" IsVisible="{Binding !News.HasBanners}"/>
           <StackPanel Margin="20,28,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Spacing="2">
             <TextBlock Text="XIVLauncher" FontSize="30" FontWeight="SemiBold"/>
             <TextBlock Text="{x:Static loc:Strings.Home_Subtitle}" FontSize="14" Foreground="#C8D4F0"/>
