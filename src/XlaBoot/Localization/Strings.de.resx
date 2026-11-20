@@ -284,16 +284,13 @@
     <value>Treiber</value>
   </data>
   <data name="Settings_DriverImportHint" xml:space="preserve">
-    <value>Importiere unten einen anderen, wenn das Spiel falsch dargestellt wird oder nicht startet.</value>
+    <value>Öffne diese Zeile, um einen anderen zu importieren, wenn das Spiel falsch dargestellt wird oder nicht startet.</value>
   </data>
   <data name="Settings_ImportDriver" xml:space="preserve">
     <value>Treiber importieren</value>
   </data>
   <data name="Settings_PickFile" xml:space="preserve">
     <value>Datei wählen</value>
-  </data>
-  <data name="Settings_ImportDriverDetail" xml:space="preserve">
-    <value>Ein AdrenoTools-.zip (ein Turnip- oder Mesa-Build, dieselben Pakete wie für Winlator und GameNative).</value>
   </data>
   <data name="Settings_RemoveDriver" xml:space="preserve">
     <value>Diesen Treiber entfernen</value>
@@ -306,12 +303,6 @@
   </data>
   <data name="Status_RemoveFailed" xml:space="preserve">
     <value>Konnte nicht entfernt werden: {0}</value>
-  </data>
-  <data name="Settings_Delete" xml:space="preserve">
-    <value>Löschen</value>
-  </data>
-  <data name="Settings_RemoveDriverDetail" xml:space="preserve">
-    <value>Löscht das importierte Paket. Der mitgelieferte Treiber kann nicht entfernt werden.</value>
   </data>
   <data name="Settings_HeaderOutput" xml:space="preserve">
     <value>Ausgabe</value>
@@ -430,9 +421,6 @@
   <data name="Settings_ImportComponent" xml:space="preserve">
     <value>{0} importieren</value>
   </data>
-  <data name="Settings_PickArchive" xml:space="preserve">
-    <value>Zip/tar.gz/wcp wählen</value>
-  </data>
   <data name="Settings_DxvkSource" xml:space="preserve">
     <value>Aus DXVK-Releases oder dem WCP Hub (auch ARM64EC-Builds). Wird beim nächsten Start angewendet.</value>
   </data>
@@ -444,9 +432,6 @@
   </data>
   <data name="Status_ComponentRemoved" xml:space="preserve">
     <value>{0} {1} entfernt; wieder auf der Standardversion {2}.</value>
-  </data>
-  <data name="Settings_RemoveComponentDetail" xml:space="preserve">
-    <value>Löscht das importierte {0} {1}.</value>
   </data>
   <data name="Status_ImportingComponent" xml:space="preserve">
     <value>{0} wird importiert...</value>

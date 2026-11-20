@@ -250,27 +250,17 @@ public partial class SettingsViewModel : ViewModelBase
 
         var drivers = GraphicsDrivers.All();
         var selected = GraphicsDrivers.Selected(drivers);
-        var driverRow = Dropdown(Strings.Settings_Driver, drivers.Select(d => d.Label).ToArray(),
-            () => drivers.FindIndex(d => d.Directory == selected.Directory),
-            index =>
+        // Import and (for an imported driver) a double-tap Remove are listed under the drivers when the row opens.
+        var actions = new List<SettingsAction>
+        {
+            new(Strings.Settings_ImportDriver, Views.Icons.Download, false, () =>
             {
-                GraphicsDrivers.Select(drivers[index]);
-                Rebuild(); // the Remove row appears and disappears with the selection
-            });
-        driverRow.Detail = drivers.Count == 1
-            ? selected.Detail + "\n" + Strings.Settings_DriverImportHint
-            : selected.Detail;
-        Rows.Add(driverRow);
-
-        Rows.Add(new SettingsRow(Strings.Settings_ImportDriver, ImportDriver)
-        {
-            Value = Strings.Settings_PickFile,
-            Detail = Strings.Settings_ImportDriverDetail,
-        });
-
+                CloseDropdowns();
+                _ = ImportDriver();
+            }),
+        };
         if (!selected.IsBundled)
-        {
-            Rows.Add(new SettingsRow(Strings.Settings_RemoveDriver, () =>
+            actions.Add(new(Strings.Settings_RemoveDriver, Views.Icons.Delete, true, () =>
             {
                 if (!_removeArmed)
                 {
@@ -288,13 +278,18 @@ public partial class SettingsViewModel : ViewModelBase
                     Status = Loc.F(Strings.Status_RemoveFailed, $"{ex.GetType().Name}: {ex.Message}");
                 }
                 Rebuild();
-            })
+            }));
+        var driverRow = Dropdown(Strings.Settings_Driver, drivers.Select(d => d.Label).ToArray(),
+            () => drivers.FindIndex(d => d.Directory == selected.Directory),
+            index =>
             {
-                Value = Strings.Settings_Delete,
-                Detail = Strings.Settings_RemoveDriverDetail,
-                IsWarning = true,
-            });
-        }
+                GraphicsDrivers.Select(drivers[index]);
+                Rebuild(); // Remove is offered only for an imported driver
+            }, actions);
+        driverRow.Detail = drivers.Count == 1
+            ? selected.Detail + "\n" + Strings.Settings_DriverImportHint
+            : selected.Detail;
+        Rows.Add(driverRow);
 
         Rows.Add(new SettingsHeader(Strings.Settings_HeaderOutput));
         Rows.Add(Choice("resolution", Strings.Settings_Resolution,
@@ -608,7 +603,8 @@ public partial class SettingsViewModel : ViewModelBase
     /// through <paramref name="pick"/> and closes the list. <paramref name="selected"/> is -1 for a stored value
     /// that is no longer an option, which launches as the first one, so the first is shown.
     /// </summary>
-    private SettingsRow Dropdown(string title, IReadOnlyList<string> labels, Func<int> selected, Action<int> pick)
+    private SettingsRow Dropdown(string title, IReadOnlyList<string> labels, Func<int> selected, Action<int> pick,
+        IReadOnlyList<SettingsAction>? actions = null)
     {
         SettingsRow? row = null;
         row = new SettingsRow(title, () =>
@@ -630,6 +626,10 @@ public partial class SettingsViewModel : ViewModelBase
                     pick(index);
                 }));
             }
+            // Import / Remove for a swappable component, after its versions.
+            if (actions != null)
+                for (var i = 0; i < actions.Count; i++)
+                    Rows.Insert(at + labels.Count + i, actions[i]);
         })
         {
             IsDropdown = true,
@@ -640,7 +640,7 @@ public partial class SettingsViewModel : ViewModelBase
 
     private void CloseDropdowns()
     {
-        foreach (var option in Rows.OfType<SettingsOption>().ToList())
+        foreach (var option in Rows.Where(r => r is SettingsOption or SettingsAction).ToList())
             Rows.Remove(option);
         foreach (var row in Rows.OfType<SettingsRow>())
             row.IsExpanded = false;
@@ -741,15 +741,44 @@ public partial class SettingsViewModel : ViewModelBase
         }
     }
     /// <summary>
-    /// The version dropdown, import row and (for an imported version) double-tap remove row of a swappable
-    /// runtime component. The runtime's own build is listed first as "&lt;version&gt; (default)".
+    /// One row per swappable runtime component: its version dropdown, with "Import" and (for an imported version)
+    /// a double-tap "Remove" listed under the versions when it opens. The runtime's own build is listed first as
+    /// "&lt;version&gt; (default)".
     /// </summary>
     private void BuildComponentRows(string name, ComponentStore store, string defaultVersion, string source,
         Func<string, string?, string, string> import)
     {
         var versions = store.Versions();
         var selected = store.Selected();
-        Rows.Add(Dropdown(Loc.F(Strings.Settings_ComponentVersion, name),
+        var actions = new List<SettingsAction>
+        {
+            new(Loc.F(Strings.Settings_ImportComponent, name), Views.Icons.Download, false, () =>
+            {
+                CloseDropdowns();
+                _ = ImportComponent(name, import);
+            }),
+        };
+        if (selected != ComponentStore.Stock)
+            actions.Add(new(Loc.F(Strings.Settings_RemoveComponent, name), Views.Icons.Delete, true, () =>
+            {
+                if (_removeComponentArmed != name)
+                {
+                    _removeComponentArmed = name;
+                    Status = Loc.F(Strings.Status_TapAgainDelete, $"{name} {selected}");
+                    return;
+                }
+                try
+                {
+                    store.Remove(selected);
+                    Status = Loc.F(Strings.Status_ComponentRemoved, name, selected, defaultVersion);
+                }
+                catch (Exception ex)
+                {
+                    Status = Loc.F(Strings.Status_RemoveFailed, $"{ex.GetType().Name}: {ex.Message}");
+                }
+                Rebuild();
+            }));
+        var row = Dropdown(Loc.F(Strings.Settings_ComponentVersion, name),
             versions.Select(v => v == selected ? Loc.F(Strings.Settings_ActiveSuffix, v) : v)
                 .Prepend(Loc.F(Strings.Settings_DefaultSuffix, defaultVersion)).ToArray(),
             () => selected == ComponentStore.Stock ? 0 : Array.IndexOf(versions, selected) + 1,
@@ -761,38 +790,9 @@ public partial class SettingsViewModel : ViewModelBase
                     ? Loc.F(Strings.Status_ComponentDefault, name, defaultVersion)
                     : Loc.F(Strings.Status_ComponentUsing, name, version);
                 Rebuild();
-            }));
-        Rows.Add(new SettingsRow(Loc.F(Strings.Settings_ImportComponent, name), () => ImportComponent(name, import))
-        {
-            Value = Strings.Settings_PickArchive,
-            Detail = source,
-        });
-        if (selected == ComponentStore.Stock)
-            return;
-        Rows.Add(new SettingsRow(Loc.F(Strings.Settings_RemoveComponent, name), () =>
-        {
-            if (_removeComponentArmed != name)
-            {
-                _removeComponentArmed = name;
-                Status = Loc.F(Strings.Status_TapAgainDelete, $"{name} {selected}");
-                return;
-            }
-            try
-            {
-                store.Remove(selected);
-                Status = Loc.F(Strings.Status_ComponentRemoved, name, selected, defaultVersion);
-            }
-            catch (Exception ex)
-            {
-                Status = Loc.F(Strings.Status_RemoveFailed, $"{ex.GetType().Name}: {ex.Message}");
-            }
-            Rebuild();
-        })
-        {
-            Value = Strings.Settings_Delete,
-            Detail = Loc.F(Strings.Settings_RemoveComponentDetail, name, selected),
-            IsWarning = true,
-        });
+            }, actions);
+        row.Detail = source;
+        Rows.Add(row);
     }
 
     private async Task ImportComponent(string name, Func<string, string?, string, string> import)

@@ -284,16 +284,13 @@
     <value>Driver</value>
   </data>
   <data name="Settings_DriverImportHint" xml:space="preserve">
-    <value>Import another below if the game renders wrongly or will not start.</value>
+    <value>Open this row to import another if the game renders wrongly or will not start.</value>
   </data>
   <data name="Settings_ImportDriver" xml:space="preserve">
     <value>Import a driver</value>
   </data>
   <data name="Settings_PickFile" xml:space="preserve">
     <value>Pick file</value>
-  </data>
-  <data name="Settings_ImportDriverDetail" xml:space="preserve">
-    <value>An AdrenoTools .zip (a Turnip or Mesa build, the same packages Winlator and GameNative take).</value>
   </data>
   <data name="Settings_RemoveDriver" xml:space="preserve">
     <value>Remove this driver</value>
@@ -306,12 +303,6 @@
   </data>
   <data name="Status_RemoveFailed" xml:space="preserve">
     <value>Could not remove it: {0}</value>
-  </data>
-  <data name="Settings_Delete" xml:space="preserve">
-    <value>Delete</value>
-  </data>
-  <data name="Settings_RemoveDriverDetail" xml:space="preserve">
-    <value>Deletes the imported package. The bundled driver cannot be removed.</value>
   </data>
   <data name="Settings_HeaderOutput" xml:space="preserve">
     <value>Output</value>
@@ -430,9 +421,6 @@
   <data name="Settings_ImportComponent" xml:space="preserve">
     <value>Import {0}</value>
   </data>
-  <data name="Settings_PickArchive" xml:space="preserve">
-    <value>Pick zip/tar.gz/wcp</value>
-  </data>
   <data name="Settings_DxvkSource" xml:space="preserve">
     <value>From DXVK releases or the WCP Hub (ARM64EC builds too). Applied at the next launch.</value>
   </data>
@@ -444,9 +432,6 @@
   </data>
   <data name="Status_ComponentRemoved" xml:space="preserve">
     <value>Removed {0} {1}; back on the default {2}.</value>
-  </data>
-  <data name="Settings_RemoveComponentDetail" xml:space="preserve">
-    <value>Deletes the imported {0} {1}.</value>
   </data>
   <data name="Status_ImportingComponent" xml:space="preserve">
     <value>Importing {0}...</value>

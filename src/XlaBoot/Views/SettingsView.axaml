@@ -120,6 +120,21 @@
               </Button>
             </DataTemplate>
 
+            <!-- Import / Remove under a component's versions: indented like the options, with an icon; Remove in red. -->
+            <DataTemplate DataType="vm:SettingsAction">
+              <Button Classes="card option" Classes.warning="{Binding IsWarning}" Command="{Binding Run}"
+                      Margin="28,0,0,8">
+                <Grid ColumnDefinitions="Auto,*">
+                  <PathIcon Grid.Column="0" Width="20" Height="20" Margin="0,0,12,0" Data="{Binding Icon}"
+                            Foreground="{StaticResource XlaAccentBrush}" IsVisible="{Binding !IsWarning}"/>
+                  <PathIcon Grid.Column="0" Width="20" Height="20" Margin="0,0,12,0" Data="{Binding Icon}"
+                            Foreground="{StaticResource XlaDangerBrush}" IsVisible="{Binding IsWarning}"/>
+                  <TextBlock Grid.Column="1" Classes="title" Text="{Binding Title}" FontSize="15" TextWrapping="Wrap"
+                             VerticalAlignment="Center"/>
+                </Grid>
+              </Button>
+            </DataTemplate>
+
             <!-- A custom Dalamud repo: the link, and a red trash button that removes it with one tap. -->
             <DataTemplate DataType="vm:RepoRow">
               <Border Classes="card" Padding="14,10" Margin="0,0,0,10">

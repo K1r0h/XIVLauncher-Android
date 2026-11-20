@@ -61,8 +61,6 @@ public static class Icons
         [Strings.Settings_SafeMode] = Shield,
         [Strings.Settings_Helper] = Chip,
         [Strings.Settings_Driver] = Terrain,
-        [Strings.Settings_ImportDriver] = Download,
-        [Strings.Settings_RemoveDriver] = Delete,
         [Strings.Settings_Resolution] = Monitor,
         [Strings.Settings_FpsCap] = Speed,
         [Strings.Settings_Renderer] = Image,
@@ -84,10 +82,6 @@ public static class Icons
         [Strings.Settings_AddRepo] = Add,
         [Strings.Settings_ImportRepos] = Download,
         [Strings.Settings_ImportPluginConfigs] = Download,
-        [Loc.F(Strings.Settings_ImportComponent, "DXVK")] = Download,
-        [Loc.F(Strings.Settings_RemoveComponent, "DXVK")] = Delete,
-        [Loc.F(Strings.Settings_ImportComponent, "FEXCore")] = Download,
-        [Loc.F(Strings.Settings_RemoveComponent, "FEXCore")] = Delete,
     };
 
     private static Dictionary<string, Geometry>? _bySettingTitle;

@@ -84,6 +84,25 @@ public sealed class SettingsOption : SettingsItem
     }
 }
 
+/// <summary>
+/// An action listed under a dropdown's values, such as importing or removing a version of a swappable component, so
+/// the component needs one row instead of three. A warning action (remove) is drawn in red.
+/// </summary>
+public sealed class SettingsAction : SettingsItem
+{
+    public Geometry Icon { get; }
+    public bool IsWarning { get; }
+    public ICommand Run { get; }
+
+    public SettingsAction(string label, Geometry icon, bool isWarning, Action run)
+    {
+        Title = label;
+        Icon = icon;
+        IsWarning = isWarning;
+        Run = new RelayCommand(run);
+    }
+}
+
 /// <summary>One custom Dalamud plugin repo: its link, and a red trash button that removes it.</summary>
 public sealed class RepoRow : SettingsItem
 {

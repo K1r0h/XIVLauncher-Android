@@ -284,16 +284,13 @@
     <value>Pilote</value>
   </data>
   <data name="Settings_DriverImportHint" xml:space="preserve">
-    <value>Importez-en un autre ci-dessous si le jeu s'affiche mal ou ne démarre pas.</value>
+    <value>Ouvrez cette ligne pour en importer un autre si le jeu s'affiche mal ou ne démarre pas.</value>
   </data>
   <data name="Settings_ImportDriver" xml:space="preserve">
     <value>Importer un pilote</value>
   </data>
   <data name="Settings_PickFile" xml:space="preserve">
     <value>Choisir un fichier</value>
-  </data>
-  <data name="Settings_ImportDriverDetail" xml:space="preserve">
-    <value>Un .zip AdrenoTools (une build Turnip ou Mesa, les mêmes paquets que pour Winlator et GameNative).</value>
   </data>
   <data name="Settings_RemoveDriver" xml:space="preserve">
     <value>Supprimer ce pilote</value>
@@ -306,12 +303,6 @@
   </data>
   <data name="Status_RemoveFailed" xml:space="preserve">
     <value>Suppression impossible : {0}</value>
-  </data>
-  <data name="Settings_Delete" xml:space="preserve">
-    <value>Supprimer</value>
-  </data>
-  <data name="Settings_RemoveDriverDetail" xml:space="preserve">
-    <value>Supprime le paquet importé. Le pilote fourni ne peut pas être supprimé.</value>
   </data>
   <data name="Settings_HeaderOutput" xml:space="preserve">
     <value>Affichage</value>
@@ -430,9 +421,6 @@
   <data name="Settings_ImportComponent" xml:space="preserve">
     <value>Importer {0}</value>
   </data>
-  <data name="Settings_PickArchive" xml:space="preserve">
-    <value>Choisir un zip/tar.gz/wcp</value>
-  </data>
   <data name="Settings_DxvkSource" xml:space="preserve">
     <value>Depuis les versions de DXVK ou le WCP Hub (versions ARM64EC comprises). Appliqué au prochain lancement.</value>
   </data>
@@ -444,9 +432,6 @@
   </data>
   <data name="Status_ComponentRemoved" xml:space="preserve">
     <value>{0} {1} supprimé ; retour à la version par défaut {2}.</value>
-  </data>
-  <data name="Settings_RemoveComponentDetail" xml:space="preserve">
-    <value>Supprime le {0} importé {1}.</value>
   </data>
   <data name="Status_ImportingComponent" xml:space="preserve">
     <value>Importation de {0}...</value>
