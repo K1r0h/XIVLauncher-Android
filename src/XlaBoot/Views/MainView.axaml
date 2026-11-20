@@ -134,32 +134,6 @@
             </Grid>
           </Button>
 
-          <Button Classes="card" Command="{Binding NavigateCommand}" CommandParameter="Login">
-            <Grid ColumnDefinitions="Auto,*,Auto">
-              <Border Grid.Column="0" Classes="tile accentTile" Margin="0,0,14,0">
-                <PathIcon Data="{x:Static views:Icons.Play}"/>
-              </Border>
-              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
-                <TextBlock Text="{x:Static loc:Strings.Home_Play}" FontSize="16" FontWeight="SemiBold"/>
-                <TextBlock Classes="dim" Text="{Binding PlayDetail}" FontSize="12.5"/>
-              </StackPanel>
-              <PathIcon Grid.Column="2" Classes="chevron" Data="{x:Static views:Icons.ChevronRight}"/>
-            </Grid>
-          </Button>
-
-
-          <Button Classes="card" Command="{Binding NavigateCommand}" CommandParameter="About">
-            <Grid ColumnDefinitions="Auto,*,Auto">
-              <Border Grid.Column="0" Classes="tile" Margin="0,0,14,0">
-                <PathIcon Data="{x:Static views:Icons.Info}"/>
-              </Border>
-              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
-                <TextBlock Text="{x:Static loc:Strings.Home_About}" FontSize="16" FontWeight="SemiBold"/>
-                <TextBlock Classes="dim" Text="{x:Static loc:Strings.Home_AboutDetail}" FontSize="12.5"/>
-              </StackPanel>
-              <PathIcon Grid.Column="2" Classes="chevron" Data="{x:Static views:Icons.ChevronRight}"/>
-            </Grid>
-          </Button>
         </StackPanel>
       </StackPanel>
     </ScrollViewer>
@@ -247,8 +221,16 @@
         </StackPanel>
       </ScrollViewer>
       <Button Classes="icon" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,12,0,0"
-              Command="{Binding NavigateCommand}" CommandParameter="Home" IsEnabled="{Binding !IsBusy}">
+              IsEnabled="{Binding !IsBusy}">
         <PathIcon Data="{x:Static views:Icons.MoreVert}"/>
+        <Button.Flyout>
+          <MenuFlyout Placement="BottomEdgeAlignedLeft">
+            <MenuItem Header="{x:Static loc:Strings.Nav_Home}" Command="{Binding NavigateCommand}" CommandParameter="Home"/>
+            <MenuItem Header="{x:Static loc:Strings.Nav_Settings}" Command="{Binding NavigateCommand}" CommandParameter="Settings"/>
+            <MenuItem Header="{x:Static loc:Strings.Logs_Title}" Command="{Binding NavigateCommand}" CommandParameter="Logs"/>
+            <MenuItem Header="{x:Static loc:Strings.Home_About}" Command="{Binding NavigateCommand}" CommandParameter="About"/>
+          </MenuFlyout>
+        </Button.Flyout>
       </Button>
     </Grid>
 
@@ -308,7 +290,7 @@
       <ScrollViewer>
         <StackPanel Margin="20,12,20,24" Spacing="10" MaxWidth="480">
           <Button Classes="icon" HorizontalAlignment="Left" Margin="-10,0,0,0"
-                  Command="{Binding NavigateCommand}" CommandParameter="Home">
+                  Command="{Binding BackCommand}">
             <PathIcon Data="{x:Static views:Icons.ArrowBack}"/>
           </Button>
           <views:CrystalLogo Width="96" Height="136" HorizontalAlignment="Center"/>
