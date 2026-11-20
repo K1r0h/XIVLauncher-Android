@@ -248,7 +248,7 @@
       </ScrollViewer>
       <Button Classes="icon" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,12,0,0"
               Command="{Binding NavigateCommand}" CommandParameter="Home" IsEnabled="{Binding !IsBusy}">
-        <PathIcon Data="{x:Static views:Icons.ArrowBack}"/>
+        <PathIcon Data="{x:Static views:Icons.MoreVert}"/>
       </Button>
     </Grid>
 
