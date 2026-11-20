@@ -92,7 +92,12 @@ public partial class MainViewModel
     [ObservableProperty]
     private bool _isGameMissing;
 
-    public string PlayDetail => SafeModeNextLaunch ? Strings.Home_PlaySafe : Strings.Home_PlayDetail;
+    /// <summary>
+    /// Under Play: the installed game's version, so the separate "Game installed" card is not needed while the game
+    /// is there (it only shows when the game is missing or unreadable, as the way to fix that).
+    /// </summary>
+    public string PlayDetail => SafeModeNextLaunch ? Strings.Home_PlaySafe
+        : IsGameMissing || GameDetail.Length == 0 ? Strings.Home_PlayDetail : GameDetail;
 
     public string VersionText => AppHost.VersionName.Length > 0
         ? $"{AppHost.VersionName} ({AppHost.VersionCode})"
