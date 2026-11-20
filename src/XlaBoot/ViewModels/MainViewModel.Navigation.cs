@@ -9,9 +9,8 @@ namespace XlaBoot.ViewModels;
 public enum LauncherPage { Home, Login, Settings, Logs, About }
 
 /// <summary>
-/// The launcher's pages. Home holds only the game card (install, or on to Login); Login's ⋮ menu reaches Home, Settings,
-/// Logs and About, and Back from those returns to the page they were opened from. Settings and Logs keep the bottom
-/// navigation between each other. Android's Back walks back to Home, then leaves the app.
+/// The launcher's pages. Home, Settings and Logs sit on the bottom navigation; Login (reached from Play) and About are
+/// pushed pages with a back arrow. Android's Back goes to Home from anywhere, then leaves the app.
 /// </summary>
 public partial class MainViewModel
 {
@@ -25,10 +24,7 @@ public partial class MainViewModel
     public bool IsSettingsPage => Page == LauncherPage.Settings;
     public bool IsLogsPage => Page == LauncherPage.Logs;
     public bool IsAboutPage => Page == LauncherPage.About;
-    public bool ShowBottomNav => Page is LauncherPage.Settings or LauncherPage.Logs;
-
-    /// <summary>Where Back leaves Settings, Logs and About: the login page when they were opened from its ⋮ menu.</summary>
-    private LauncherPage _returnPage = LauncherPage.Home;
+    public bool ShowBottomNav => Page is LauncherPage.Home or LauncherPage.Settings or LauncherPage.Logs;
 
     public LogsViewModel Logs { get; } = new();
 
@@ -48,30 +44,18 @@ public partial class MainViewModel
         // A login in progress owns the screen: its status line is on the login page.
         if (IsBusy)
             return;
-        // The game card is the home page's only way on: to the login page with the game in place, otherwise to
-        // Settings on General, where the install location is.
+        // The game card opens Settings on General, where the install location is.
         if (page == "Game")
         {
-            if (!IsGameMissing)
-                page = nameof(LauncherPage.Login);
-            else
-            {
-                Settings.TabIndex = 0;
-                page = nameof(LauncherPage.Settings);
-            }
+            Settings.TabIndex = 0;
+            page = nameof(LauncherPage.Settings);
         }
         if (!System.Enum.TryParse<LauncherPage>(page, out var target))
             return;
-        if (target is LauncherPage.Home or LauncherPage.Login)
-            _returnPage = target;
         if (target == Page && target == LauncherPage.Home)
             RefreshHome();
         Page = target;
     }
-
-    /// <summary>The back arrow on pushed pages: same as Android Back.</summary>
-    [RelayCommand]
-    private void Back() => GoBack();
 
     /// <summary>Android Back. False when already home, so the platform does its default (leave the app).</summary>
     public bool GoBack()
@@ -79,7 +63,7 @@ public partial class MainViewModel
         if (Page == LauncherPage.Home)
             return false;
         if (!IsBusy)
-            Page = Page == LauncherPage.Login ? LauncherPage.Home : _returnPage;
+            Page = LauncherPage.Home;
         return true;
     }
 
