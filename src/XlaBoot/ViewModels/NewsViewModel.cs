@@ -80,8 +80,8 @@ public partial class NewsViewModel : ObservableObject
         _bannerTimer?.Start();
     }
 
-    /// <summary>Steps to the next banner on its own every couple of seconds while banners are on show.</summary>
-    private static readonly TimeSpan BannerInterval = TimeSpan.FromSeconds(2);
+    /// <summary>Steps to the next banner on its own every few seconds while banners are on show.</summary>
+    private static readonly TimeSpan BannerInterval = TimeSpan.FromSeconds(7);
     private DispatcherTimer? _bannerTimer;
 
     private void UpdateBannerTimer()
