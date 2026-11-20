@@ -791,7 +791,7 @@ public partial class SettingsViewModel : ViewModelBase
                 Rebuild();
             }));
         var row = Dropdown(Loc.F(Strings.Settings_ComponentVersion, name),
-            versions.Select(v => v == selected ? Loc.F(Strings.Settings_ActiveSuffix, v) : v)
+            versions
                 .Prepend(Loc.F(Strings.Settings_DefaultSuffix, defaultVersion)).ToArray(),
             () => selected == ComponentStore.Stock ? 0 : Array.IndexOf(versions, selected) + 1,
             index =>

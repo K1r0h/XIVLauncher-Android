@@ -445,9 +445,6 @@
   <data name="Status_ComponentImported" xml:space="preserve">
     <value>{0} {1} importiert. Der nächste Start verwendet es.</value>
   </data>
-  <data name="Settings_ActiveSuffix" xml:space="preserve">
-    <value>{0} (aktiv)</value>
-  </data>
   <data name="Status_ImportFailedReason" xml:space="preserve">
     <value>Import fehlgeschlagen: {0}</value>
   </data>

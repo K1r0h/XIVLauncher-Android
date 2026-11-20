@@ -445,9 +445,6 @@
   <data name="Status_ComponentImported" xml:space="preserve">
     <value>{0} {1} をインポートしました。次回の起動から使用します。</value>
   </data>
-  <data name="Settings_ActiveSuffix" xml:space="preserve">
-    <value>{0}（使用中）</value>
-  </data>
   <data name="Status_ImportFailedReason" xml:space="preserve">
     <value>インポートに失敗しました: {0}</value>
   </data>
