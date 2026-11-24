@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed-icon (Material You) layer: the crystal and shards as one flat silhouette. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+  <group android:translateX="32.12" android:translateY="24.00" android:scaleX="0.3647" android:scaleY="0.3647">
+    <path android:fillColor="#FFFFFF" android:pathData="M60,4 L32,64 L60,166 L88,64 Z M22,86 L12,112 L22,140 L31,112 Z M98,86 L108,112 L98,140 L89,112 Z"/>
+  </group>
+</vector>
