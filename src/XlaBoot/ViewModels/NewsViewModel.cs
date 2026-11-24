@@ -147,6 +147,7 @@ public partial class NewsViewModel : ObservableObject
 
     private async Task LoadAsync(ClientLanguage language)
     {
+        await Frontier.WaitAsync().ConfigureAwait(false);
         try
         {
             var launcher = new Launcher((ISteam?)null, new CommonUniqueIdCache(null), FrontierUrl, "en-us");
@@ -193,6 +194,7 @@ public partial class NewsViewModel : ObservableObject
         finally
         {
             _loading = false;
+            Frontier.Release();
         }
     }
 
@@ -220,6 +222,13 @@ public partial class NewsViewModel : ObservableObject
     [ObservableProperty] private bool _gateOpen;
 
     private DateTime _gateCheckedAt = DateTime.MinValue;
+
+    /// <summary>
+    /// The news load and the gate check take turns. Started together right after launch, both made Mono load
+    /// XIVLauncher.Common's dependencies on two threads at once, which crashed the assembly loader (SIGSEGV in
+    /// mono_assembly_request_byname) or failed with FileNotFoundException for System.Data.Common.
+    /// </summary>
+    private static readonly System.Threading.SemaphoreSlim Frontier = new(1, 1);
     private bool _gateLoading;
 
     /// <summary>The same gate check the official launcher makes, at most once a minute, independent of the news setting.</summary>
@@ -230,6 +239,7 @@ public partial class NewsViewModel : ObservableObject
         _gateLoading = true;
         _ = Task.Run(async () =>
         {
+            await Frontier.WaitAsync().ConfigureAwait(false);
             try
             {
                 var launcher = new Launcher((ISteam?)null, new CommonUniqueIdCache(null), FrontierUrl, "en-us");
@@ -248,6 +258,7 @@ public partial class NewsViewModel : ObservableObject
             finally
             {
                 _gateLoading = false;
+                Frontier.Release();
             }
         });
     }
