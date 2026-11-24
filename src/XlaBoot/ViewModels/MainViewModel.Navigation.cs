@@ -113,6 +113,27 @@ public partial class MainViewModel
         ? $"{AppHost.VersionName} ({AppHost.VersionCode})"
         : Strings.About_DevBuild;
 
+    /// <summary>Home's setup chip: the driver, DXVK and FEXCore the next launch will use.</summary>
+    [ObservableProperty]
+    private string _setupSummary = "";
+
+    private static string BuildSetupSummary()
+    {
+        try
+        {
+            var driver = GraphicsDrivers.Selected(GraphicsDrivers.All()).Label;
+            var dxvk = Imports.DxvkImport.Store(AppHost.FilesDir).Selected();
+            var fex = Imports.FexImport.Store(AppHost.FilesDir).Selected();
+            if (dxvk == Imports.ComponentStore.Stock) dxvk = Provisioning.RuntimeInstaller.StockDxvkVersion;
+            if (fex == Imports.ComponentStore.Stock) fex = Provisioning.RuntimeInstaller.StockFexVersion;
+            return $"{driver} · DXVK {dxvk} · FEX {fex}";
+        }
+        catch (System.Exception)
+        {
+            return ""; // runtime not installed yet: no chip
+        }
+    }
+
     /// <summary>Re-checked every time Home is shown: the folder or the storage permission may have changed in settings.</summary>
     public void RefreshHome()
     {
@@ -140,6 +161,7 @@ public partial class MainViewModel
                 break;
         }
         OnPropertyChanged(nameof(PlayDetail));
+        SetupSummary = BuildSetupSummary();
         News.Refresh(GameLanguage);
     }
 }

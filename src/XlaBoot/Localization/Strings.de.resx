@@ -700,6 +700,12 @@
   <data name="Home_VersionShort" xml:space="preserve">
     <value>Ver. {0}</value>
   </data>
+  <data name="Home_ServersOnline" xml:space="preserve">
+    <value>Server online</value>
+  </data>
+  <data name="Home_Maintenance" xml:space="preserve">
+    <value>Wartungsarbeiten</value>
+  </data>
   <data name="Home_VersionUnknown" xml:space="preserve">
     <value>Version unbekannt</value>
   </data>

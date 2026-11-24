@@ -131,6 +131,7 @@ public partial class NewsViewModel : ObservableObject
     /// <summary>Called whenever Home is shown; does nothing while a load is running or the last one is recent.</summary>
     public void Refresh(ClientLanguage language)
     {
+        RefreshGate(language);
         // Settings > General > News on Home: BOTH, NEWS, BANNERS or OFF.
         var feed = AppHost.Get("home_feed", "BOTH");
         _newsEnabled = feed is "BOTH" or "NEWS";
@@ -209,6 +210,47 @@ public partial class NewsViewModel : ObservableObject
     }
 
     [ObservableProperty] private bool _showFailure;
+
+    // ---- Server status chip ----------------------------------------------------------------------
+
+    /// <summary>Whether gate_status.json answered at all; the chip hides until it has.</summary>
+    [ObservableProperty] private bool _hasGateStatus;
+
+    /// <summary>The login gate: open = servers up, closed = maintenance.</summary>
+    [ObservableProperty] private bool _gateOpen;
+
+    private DateTime _gateCheckedAt = DateTime.MinValue;
+    private bool _gateLoading;
+
+    /// <summary>The same gate check the official launcher makes, at most once a minute, independent of the news setting.</summary>
+    private void RefreshGate(ClientLanguage language)
+    {
+        if (_gateLoading || DateTime.UtcNow - _gateCheckedAt < TimeSpan.FromMinutes(1))
+            return;
+        _gateLoading = true;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var launcher = new Launcher((ISteam?)null, new CommonUniqueIdCache(null), FrontierUrl, "en-us");
+                var gate = await launcher.GetGateStatus(language).ConfigureAwait(false);
+                _gateCheckedAt = DateTime.UtcNow;
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    GateOpen = gate.Status;
+                    HasGateStatus = true;
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"XlaLauncher: gate status unavailable ({ex.GetType().Name}: {ex.Message})");
+            }
+            finally
+            {
+                _gateLoading = false;
+            }
+        });
+    }
 
     /// <summary>
     /// The feed leaves url empty for Lodestone articles and gives only the id. Headlines.GetNews fills those in for
