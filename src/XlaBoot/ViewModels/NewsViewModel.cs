@@ -171,9 +171,9 @@ public partial class NewsViewModel : ObservableObject
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 Fill(Banners, images.OfType<NewsBanner>());
-                Fill(Pinned, headlines.Pinned?.Select(ToItem));
-                Fill(News, headlines.News?.Select(ToItem));
-                Fill(Topics, headlines.Topics?.Select(ToItem));
+                Fill(Pinned, headlines.Pinned?.Select(n => ToItem(n, language)));
+                Fill(News, headlines.News?.Select(n => ToItem(n, language)));
+                Fill(Topics, headlines.Topics?.Select(n => ToItem(n, language)));
                 ShowBanner(0);
                 Failed = false;
                 UpdateVisibility();
@@ -210,12 +210,17 @@ public partial class NewsViewModel : ObservableObject
 
     [ObservableProperty] private bool _showFailure;
 
-    private static NewsItem ToItem(News n) => new()
+    /// <summary>
+    /// The feed leaves url empty for Lodestone articles and gives only the id. Headlines.GetNews fills those in for
+    /// News and Topics but not for Pinned, so the Important rows opened nothing; build the Lodestone link here.
+    /// </summary>
+    private static NewsItem ToItem(News n, ClientLanguage language) => new()
     {
         Title = n.Title,
         Date = n.Date.ToLocalTime().ToString("MMM d"),
         Tag = string.IsNullOrWhiteSpace(n.Tag) ? null : n.Tag,
-        Url = n.Url,
+        Url = !string.IsNullOrEmpty(n.Url) || string.IsNullOrEmpty(n.Id) ? n.Url
+            : $"https://{language.GetLangCodeLodestone()}.finalfantasyxiv.com/lodestone/news/detail/{n.Id}",
     };
 
     private static void Fill<T>(ObservableCollection<T> target, System.Collections.Generic.IEnumerable<T>? items)
