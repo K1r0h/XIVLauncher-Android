@@ -347,7 +347,7 @@
             </Button>
           </Border>
 
-          <!-- Status chips under Login: server gate (from the official launcher's check) and the active runtime. -->
+          <!-- Status chip under Login: the server gate, from the official launcher's check. -->
           <WrapPanel HorizontalAlignment="Center" Margin="0,-2,0,0">
             <Border Classes="chip" IsVisible="{Binding News.HasGateStatus}">
               <StackPanel Orientation="Horizontal" Spacing="6">
@@ -356,9 +356,6 @@
                 <TextBlock Text="{x:Static loc:Strings.Home_ServersOnline}" IsVisible="{Binding News.GateOpen}"/>
                 <TextBlock Text="{x:Static loc:Strings.Home_Maintenance}" IsVisible="{Binding !News.GateOpen}"/>
               </StackPanel>
-            </Border>
-            <Border Classes="chip" IsVisible="{Binding SetupSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-              <TextBlock Text="{Binding SetupSummary}" TextTrimming="CharacterEllipsis" MaxWidth="320"/>
             </Border>
           </WrapPanel>
 
