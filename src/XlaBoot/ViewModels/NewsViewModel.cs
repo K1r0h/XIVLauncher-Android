@@ -131,12 +131,13 @@ public partial class NewsViewModel : ObservableObject
     /// <summary>Called whenever Home is shown; does nothing while a load is running or the last one is recent.</summary>
     public void Refresh(ClientLanguage language)
     {
-        RefreshGate(language);
+        LoadCache();
         // Settings > General > News on Home: BOTH, NEWS, BANNERS or OFF.
         var feed = AppHost.Get("home_feed", "BOTH");
         _newsEnabled = feed is "BOTH" or "NEWS";
         _bannersEnabled = feed is "BOTH" or "BANNERS";
         UpdateVisibility();
+        RefreshGateLater(language);
         if (!_newsEnabled && !_bannersEnabled)
             return;
         if (_loading || DateTime.UtcNow - _loadedAt < RefreshAfter)
@@ -151,7 +152,18 @@ public partial class NewsViewModel : ObservableObject
         try
         {
             var launcher = new Launcher((ISteam?)null, new CommonUniqueIdCache(null), FrontierUrl, "en-us");
+            // One request at a time: two XIVLauncher.Common calls in flight at once make Mono resolve its
+            // dependencies on two threads, which crashes the assembly loader (see Frontier). The text shows as
+            // soon as it is in; the banner list and images follow.
             var headlines = await Headlines.GetNews(launcher, language).ConfigureAwait(false);
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                Fill(Pinned, headlines.Pinned?.Select(n => ToItem(n, language)));
+                Fill(News, headlines.News?.Select(n => ToItem(n, language)));
+                Fill(Topics, headlines.Topics?.Select(n => ToItem(n, language)));
+                Failed = false;
+                UpdateVisibility();
+            });
             var banners = await Headlines.GetBanners(launcher, language).ConfigureAwait(false);
 
             var images = await Task.WhenAll((banners ?? Array.Empty<Banner>())
@@ -162,25 +174,27 @@ public partial class NewsViewModel : ObservableObject
                     try
                     {
                         var bytes = await ImageHttp.GetByteArrayAsync(b.LsbBanner).ConfigureAwait(false);
-                        return new NewsBanner { Image = new Bitmap(new MemoryStream(bytes)), Url = b.Link.ToString() };
+                        return (Banner: new NewsBanner { Image = new Bitmap(new MemoryStream(bytes)), Url = b.Link.ToString() },
+                            Bytes: bytes);
                     }
                     catch (Exception)
                     {
-                        return null; // one missing banner image is not worth failing the panel for
+                        return ((NewsBanner Banner, byte[] Bytes)?)null; // one missing image is not worth failing the panel for
                     }
                 })).ConfigureAwait(false);
 
+            var loaded = images.Where(i => i != null).Select(i => i!.Value).ToList();
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                Fill(Banners, images.OfType<NewsBanner>());
-                Fill(Pinned, headlines.Pinned?.Select(n => ToItem(n, language)));
-                Fill(News, headlines.News?.Select(n => ToItem(n, language)));
-                Fill(Topics, headlines.Topics?.Select(n => ToItem(n, language)));
-                ShowBanner(0);
-                Failed = false;
+                if (loaded.Count > 0 || Banners.Count == 0)
+                {
+                    Fill(Banners, loaded.Select(i => i.Banner));
+                    ShowBanner(0);
+                }
                 UpdateVisibility();
             });
             _loadedAt = DateTime.UtcNow;
+            SaveCache(loaded);
         }
         catch (Exception ex)
         {
@@ -231,6 +245,10 @@ public partial class NewsViewModel : ObservableObject
     private static readonly System.Threading.SemaphoreSlim Frontier = new(1, 1);
     private bool _gateLoading;
 
+    /// <summary>Queued just after the news load so the headlines are not kept waiting behind it.</summary>
+    private void RefreshGateLater(ClientLanguage language) =>
+        Dispatcher.UIThread.Post(() => RefreshGate(language), DispatcherPriority.Background);
+
     /// <summary>The same gate check the official launcher makes, at most once a minute, independent of the news setting.</summary>
     private void RefreshGate(ClientLanguage language)
     {
@@ -253,7 +271,7 @@ public partial class NewsViewModel : ObservableObject
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"XlaLauncher: gate status unavailable ({ex.GetType().Name}: {ex.Message})");
+                Console.WriteLine($"XlaLauncher: gate status unavailable ({ex.GetType().Name}: {ex.Message} / {ex.InnerException?.GetType().Name}: {ex.InnerException?.Message})");
             }
             finally
             {
@@ -267,6 +285,73 @@ public partial class NewsViewModel : ObservableObject
     /// The feed leaves url empty for Lodestone articles and gives only the id. Headlines.GetNews fills those in for
     /// News and Topics but not for Pinned, so the Important rows opened nothing; build the Lodestone link here.
     /// </summary>
+    // ---- Disk cache: the last headlines and banner images show instantly at the next launch ----------
+
+    private sealed record CachedItem(string Title, string Date, string? Tag, string Url);
+    private sealed record CachedNews(CachedItem[] Pinned, CachedItem[] News, CachedItem[] Topics, string[] BannerUrls);
+
+    private static string CacheDir => System.IO.Path.Combine(
+        AppHost.CacheDir.Length > 0 ? AppHost.CacheDir : System.IO.Path.Combine(AppHost.FilesDir, "cache"), "news");
+
+    private bool _cacheLoaded;
+
+    /// <summary>Once per process, before the first download: whatever the last successful load saved.</summary>
+    private void LoadCache()
+    {
+        if (_cacheLoaded)
+            return;
+        _cacheLoaded = true;
+        try
+        {
+            var index = System.IO.Path.Combine(CacheDir, "news.json");
+            if (!File.Exists(index))
+                return;
+            var cached = System.Text.Json.JsonSerializer.Deserialize<CachedNews>(File.ReadAllText(index));
+            if (cached == null)
+                return;
+            NewsItem Item(CachedItem c) => new() { Title = c.Title, Date = c.Date, Tag = c.Tag, Url = c.Url };
+            Fill(Pinned, cached.Pinned.Select(Item));
+            Fill(News, cached.News.Select(Item));
+            Fill(Topics, cached.Topics.Select(Item));
+            var banners = new System.Collections.Generic.List<NewsBanner>();
+            for (var i = 0; i < cached.BannerUrls.Length; i++)
+            {
+                var file = System.IO.Path.Combine(CacheDir, $"banner{i}.img");
+                if (File.Exists(file))
+                    banners.Add(new NewsBanner { Image = new Bitmap(file), Url = cached.BannerUrls[i] });
+            }
+            Fill(Banners, banners);
+            ShowBanner(0);
+            UpdateVisibility();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"XlaLauncher: news cache unreadable ({ex.GetType().Name}: {ex.Message})");
+        }
+    }
+
+    private void SaveCache(System.Collections.Generic.List<(NewsBanner Banner, byte[] Bytes)> banners)
+    {
+        try
+        {
+            Directory.CreateDirectory(CacheDir);
+            foreach (var old in Directory.GetFiles(CacheDir, "banner*.img"))
+                File.Delete(old);
+            for (var i = 0; i < banners.Count; i++)
+                File.WriteAllBytes(System.IO.Path.Combine(CacheDir, $"banner{i}.img"), banners[i].Bytes);
+            CachedItem C(NewsItem n) => new(n.Title, n.Date, n.Tag, n.Url);
+            CachedNews snapshot = null!;
+            Dispatcher.UIThread.Invoke(() => snapshot = new CachedNews(Pinned.Select(C).ToArray(),
+                News.Select(C).ToArray(), Topics.Select(C).ToArray(), banners.Select(b => b.Banner.Url).ToArray()));
+            File.WriteAllText(System.IO.Path.Combine(CacheDir, "news.json"),
+                System.Text.Json.JsonSerializer.Serialize(snapshot));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"XlaLauncher: news cache not saved ({ex.GetType().Name}: {ex.Message})");
+        }
+    }
+
     private static NewsItem ToItem(News n, ClientLanguage language) => new()
     {
         Title = n.Title,
