@@ -1,13 +1,13 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
   <item>
     <color android:color="@color/splash_background"/>
   </item>
 
-  <item android:drawable="@drawable/icon"
-        android:width="120dp"
-        android:height="120dp"
+  <item android:drawable="@drawable/crystal_splash"
+        android:width="288dp"
+        android:height="288dp"
         android:gravity="center" />
 
 </layer-list>
