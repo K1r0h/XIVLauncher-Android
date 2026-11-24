@@ -3,8 +3,9 @@
      inside the system's 192dp icon circle. Replaces the Avalonia template logo. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
     android:width="288dp" android:height="288dp" android:viewportWidth="288" android:viewportHeight="288">
+  <group android:name="crystal" android:pivotX="144" android:pivotY="144">
   <group android:translateX="87.5" android:translateY="64" android:scaleX="0.94" android:scaleY="0.94">
-    <path android:pathData="M-10,85 a70,70 0 1,0 140,0 a70,70 0 1,0 -140,0">
+    <path android:name="glow" android:pathData="M-10,85 a70,70 0 1,0 140,0 a70,70 0 1,0 -140,0">
       <aapt:attr name="android:fillColor"><gradient android:type="radial" android:centerX="60" android:centerY="85" android:gradientRadius="70">
         <item android:offset="0" android:color="#664C8DFF"/><item android:offset="0.55" android:color="#224C8DFF"/><item android:offset="1" android:color="#004C8DFF"/>
       </gradient></aapt:attr></path>
@@ -37,6 +38,9 @@
     <path android:pathData="M60,4 L60,166" android:strokeColor="#99FFFFFF" android:strokeWidth="0.8"/>
     <path android:pathData="M32,64 L60,76 L88,64" android:strokeColor="#80FFFFFF" android:strokeWidth="0.8"/>
     <path android:pathData="M60,4 L32,64 L60,166 L88,64 Z" android:strokeColor="#40DDE8FF" android:strokeWidth="1"/>
+    <group android:name="sparkle" android:pivotX="60" android:pivotY="24">
     <path android:pathData="M60,14 L62,22 L70,24 L62,26 L60,34 L58,26 L50,24 L58,22 Z" android:fillColor="#E6FFFFFF"/>
+    </group>
+  </group>
   </group>
 </vector>
